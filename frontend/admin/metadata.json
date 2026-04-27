@@ -1,0 +1,7 @@
+{
+  "name": "VisionCashier Admin Pro",
+  "description": "Enterprise-grade admin dashboard for Computer Vision-powered retail systems, featuring real-time monitoring, inventory management, and AI-driven analytics.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

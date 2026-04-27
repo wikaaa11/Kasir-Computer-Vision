@@ -1,0 +1,217 @@
+
+export type Language = 'id' | 'en';
+
+export const translations = {
+  id: {
+    landing: {
+      integrated: 'Terintegrasi YOLO Vision',
+      heroTitle1: 'Belanja Cepat,',
+      heroTitle2: 'Tanpa Antre.',
+      heroDesc: 'Gunakan teknologi Computer Vision untuk mendeteksi barang Anda secara instan. Cukup foto, bayar, dan selesai!',
+      startBtn: 'Mulai Belanja',
+      scanProduct: 'Scan Produk',
+      noBarcode: 'Tanpa Barcode',
+      queueTime: 'Waktu Antrean',
+      registerMember: 'Daftar Member',
+      memberDesc: 'Nikmati diskon 10% otomatis setiap belanja.',
+      joinNow: 'Join Now',
+      scanMe: 'SCAN ME'
+    },
+    selectInput: {
+      back: 'Kembali',
+      title: 'Mulai Belanja',
+      subtitle: 'Pilih Cara Anda',
+      desc: 'Pilih metode input yang paling nyaman untuk checkout lebih cepat.',
+      aiTitle: 'AI Scan Camera',
+      aiDesc: 'Deteksi barang otomatis dengan backend YOLO.',
+      aiSelect: 'Pilih AI Scan',
+      barcodeTitle: 'Manual Barcode',
+      barcodeDesc: 'Pindai kode barcode pada kemasan untuk akurasi maksimal.',
+      barcodeSelect: 'Pilih Barcode',
+      popular: 'Terpopuler',
+      fast: 'Cepat'
+    },
+    cart: {
+      title: 'Keranjang Belanja',
+      items: 'ITEMS',
+      summary: 'Ringkasan',
+      subtotal: 'Subtotal',
+      voucher: 'Voucher',
+      redeemPoints: 'Redeem Poin',
+      totalFinal: 'TOTAL AKHIR',
+      payNow: 'BAYAR SEKARANG',
+      cancel: 'Batal & Ulangi',
+      membershipCard: 'Ngolab Membership',
+      hasMembershipDesc: 'Punya kartu member? Scan untuk dapatkan diskon spesial member.',
+      scanMember: 'Scan Member',
+      activeMemberPortal: 'Portal Member Aktif',
+      activeMemberDesc: 'Atur penggunaan voucher di menu reward untuk belanja lebih hemat.',
+      menuReward: 'Menu Reward'
+    },
+    membership: {
+      title: 'Ngolab Membership',
+      check: 'Membership Check',
+      scanCard: 'Scan Kartu Member',
+      discountDesc: 'Dapatkan diskon 10% otomatis untuk setiap transaksi member.',
+      simulateScan: 'Simulasi Scan Member',
+      noMember: 'Tidak Punya Member / Skip'
+    },
+    voucher: {
+      title: 'Reward & Loyalty',
+      subtitle: 'Gunakan Keuntungan Member Anda',
+      pointBalance: 'Saldo Poin Anda',
+      pts: 'pts',
+      usePoints: 'Gunakan {points} Poin',
+      cancelPoints: 'Batalkan Poin',
+      successMessage: '✓ Berhasil memotong Rp {amount}',
+      potentialCashback: 'Potensi Cashback',
+      guestMode: 'GUEST MODE',
+      loginMemberMsg: 'Masuk member untuk menggunakan poin',
+      continuePay: 'Lanjutkan Ke Pembayaran',
+      availableVouchers: 'Voucher Tersedia',
+      maxSavings: 'Hemat Maksimal',
+      memberReward: 'Member Reward',
+      publicPromo: 'Promo Publik',
+      off: 'Off',
+      useVoucher: 'Gunakan Voucher ini',
+      cancelVoucher: 'Batalkan Voucher',
+      voucherAttached: 'Voucher Terpasang'
+    },
+    payment: {
+      qrisPayment: 'QRIS Pembayaran',
+      scanPay: 'SCAN & BAYAR',
+      verifying: 'MEMVERIFIKASI...',
+      verifyMessage: 'Sistem akan memverifikasi pembayaran secara otomatis dalam 15 detik',
+      totalBill: 'TOTAL TAGIHAN',
+      simulatePay: 'Simulasi Bayar',
+      cashCheckout: 'CASH CHECKOUT',
+      cashierDesk: 'Ke Meja Kasir',
+      queueNumber: 'Silahkan menuju kasir utama dan tunjukkan nomor antrean digital Anda di bawah ini.',
+      yourQueueNumber: 'NOMOR ANTREAN ANDA',
+      cashierReady: 'KASIR SIAP MELAYANI',
+      confirmStaff: 'Simulasi Konfirmasi Staf',
+      ngolab: 'Ngolab Payment',
+      ngolab2: 'Ngolab System'
+    },
+    success: {
+      thankYou: 'Terima Kasih!',
+      receiptMessage: 'Pembayaran Anda telah kami terima. Silahkan ambil struk belanja Anda.',
+      transactionDetails: 'DETAIL TRANSAKSI',
+      transactionId: 'ID Transaksi',
+      totalPaid: 'Total Lunas',
+      status: 'STATUS: BERHASIL',
+      finishShopping: 'Selesai Belanja',
+      finishing: 'Menyelesaikan...'
+    },
+    layout: {
+      help: 'Bantuan',
+      copyright: '© 2024 Ngolab System • Mitra Terpercaya Belanja Anda'
+    }
+  },
+  en: {
+    landing: {
+      integrated: 'Integrated YOLO Vision',
+      heroTitle1: 'Shop Fast,',
+      heroTitle2: 'Zero Waiting.',
+      heroDesc: 'Use Computer Vision technology to detect your items instantly. Just snap, pay, and you\'re done!',
+      startBtn: 'Start Shopping',
+      scanProduct: 'Product Scan',
+      noBarcode: 'No Barcode',
+      queueTime: 'Queue Time',
+      registerMember: 'Member Registration',
+      memberDesc: 'Enjoy automatic 10% discount on every purchase.',
+      joinNow: 'Join Now',
+      scanMe: 'SCAN ME'
+    },
+    selectInput: {
+      back: 'Back',
+      title: 'Start Shopping',
+      subtitle: 'Pick Your Way',
+      desc: 'Choose the input method that is most comfortable for faster checkout.',
+      aiTitle: 'AI Scan Camera',
+      aiDesc: 'Automatic item detection powered by a YOLO backend.',
+      aiSelect: 'Select AI Scan',
+      barcodeTitle: 'Manual Barcode',
+      barcodeDesc: 'Scan the barcode on the package for maximum accuracy.',
+      barcodeSelect: 'Select Barcode',
+      popular: 'Most Popular',
+      fast: 'Fast'
+    },
+    cart: {
+      title: 'Shopping Cart',
+      items: 'ITEMS',
+      summary: 'Summary',
+      subtotal: 'Subtotal',
+      voucher: 'Voucher',
+      redeemPoints: 'Redeem Points',
+      totalFinal: 'FINAL TOTAL',
+      payNow: 'PAY NOW',
+      cancel: 'Cancel & Restart',
+      membershipCard: 'Ngolab Membership',
+      hasMembershipDesc: 'Have a membership card? Scan to get special member discount.',
+      scanMember: 'Scan Member',
+      activeMemberPortal: 'Active Member Portal',
+      activeMemberDesc: 'Manage your voucher usage in the rewards menu to save more.',
+      menuReward: 'Rewards Menu'
+    },
+    membership: {
+      title: 'Ngolab Membership',
+      check: 'Membership Check',
+      scanCard: 'Scan Member Card',
+      discountDesc: 'Get automatic 10% discount on every member transaction.',
+      simulateScan: 'Simulate Member Scan',
+      noMember: 'No Member / Skip'
+    },
+    voucher: {
+      title: 'Reward & Loyalty',
+      subtitle: 'Use Your Member Benefits',
+      pointBalance: 'Your Points Balance',
+      pts: 'pts',
+      usePoints: 'Use {points} Points',
+      cancelPoints: 'Cancel Points',
+      successMessage: '✓ Successfully deducted Rp {amount}',
+      potentialCashback: 'Potential Cashback',
+      guestMode: 'GUEST MODE',
+      loginMemberMsg: 'Log in as a member to use points',
+      continuePay: 'Continue to Payment',
+      availableVouchers: 'Available Vouchers',
+      maxSavings: 'Maximum Savings',
+      memberReward: 'Member Reward',
+      publicPromo: 'Public Promo',
+      off: 'Off',
+      useVoucher: 'Apply This Voucher',
+      cancelVoucher: 'Cancel Voucher',
+      voucherAttached: 'Voucher Applied'
+    },
+    payment: {
+      qrisPayment: 'QRIS Payment',
+      scanPay: 'SCAN & PAY',
+      verifying: 'VERIFYING...',
+      verifyMessage: 'System will verify the payment automatically in 15 seconds',
+      totalBill: 'TOTAL BILL',
+      simulatePay: 'Simulate Payment',
+      cashCheckout: 'CASH CHECKOUT',
+      cashierDesk: 'Go to Cashier Desk',
+      queueNumber: 'Please go to the main cashier and show your digital queue number below.',
+      yourQueueNumber: 'YOUR QUEUE NUMBER',
+      cashierReady: 'CASHIER READY TO SERVE',
+      confirmStaff: 'Simulate Staff Confirmation',
+      ngolab: 'Ngolab Payment',
+      ngolab2: 'Ngolab System'
+    },
+    success: {
+      thankYou: 'Thank You!',
+      receiptMessage: 'We have received your payment. Please take your receipt.',
+      transactionDetails: 'TRANSACTION DETAILS',
+      transactionId: 'Transaction ID',
+      totalPaid: 'Total Paid',
+      status: 'STATUS: SUCCESS',
+      finishShopping: 'Finish Shopping',
+      finishing: 'Finishing...'
+    },
+    layout: {
+      help: 'Support',
+      copyright: '© 2024 Ngolab System • Your Trusted Shopping Partner'
+    }
+  }
+};

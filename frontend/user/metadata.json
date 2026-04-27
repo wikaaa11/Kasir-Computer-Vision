@@ -1,0 +1,7 @@
+{
+  "name": "Ngolab computer-vision",
+  "description": "A futuristic AI-powered self-checkout web application with item detection and multi-payment support.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
