@@ -47,17 +47,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
             <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center mb-5 text-[#F97316] group-hover:scale-110 transition-transform">
               <ShoppingBasket size={28} />
             </div>
-            <h4 className="text-base font-black text-slate-900 mb-1">{t.scanProduct}</h4>
-            <p className="text-xs text-slate-400 font-medium">{t.noBarcode}</p>
+            <h4 className="text-base font-black text-slate-900 mb-1">Scan Produk</h4>
+            <p className="text-xs text-slate-400 font-medium">Camera & Barcode</p>
           </div>
 
-          {/* Feature Card 2: Waktu Antrean */}
+          {/* Feature Card 2: Instant Checkout */}
           <div className="bg-white p-8 rounded-[40px] vision-shadow border border-slate-50 flex flex-col items-center text-center group hover:-translate-y-1 transition-all duration-300">
             <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center mb-5 text-[#F97316] group-hover:scale-110 transition-transform">
               <Clock size={28} />
             </div>
-            <h4 className="text-base font-black text-slate-900 mb-1">0%</h4>
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-tighter">{t.queueTime}</p>
+            <h4 className="text-base font-black text-slate-900 mb-1">Instant Checkout</h4>
+            <p className="text-xs text-slate-400 font-medium">Proses Cepat</p>
           </div>
 
           {/* Feature Card 3: Membership QR (Integrated - Spans 2 columns for better balance) */}
@@ -71,7 +71,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
                 <UserPlus size={20} />
               </div>
               <h4 className="text-lg font-black text-slate-900 mb-1">{t.registerMember}</h4>
-              <p className="text-xs text-slate-500 mb-3">{t.memberDesc}</p>
+              <p className="text-xs text-slate-500 mb-3">Nikmati berbagai macam diskon setiap belanja.</p>
               <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 rounded-full border border-green-100">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                 <span className="text-[9px] font-bold text-green-700 uppercase tracking-wider">{t.joinNow}</span>

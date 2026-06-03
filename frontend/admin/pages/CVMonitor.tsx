@@ -35,7 +35,7 @@ const CVMonitor: React.FC<CVMonitorProps> = ({ products, onSync }) => {
 
   const inventoryToMap = products.filter(p => {
     const s = searchQuery.toLowerCase();
-    return (p.nama?.toLowerCase().includes(s)) || (p.id?.toLowerCase().includes(s));
+    return (String(p.nama || '').toLowerCase().includes(s)) || (String(p.id || '').toLowerCase().includes(s)) || (String(p.category_name || '').toLowerCase().includes(s));
   });
 
   useEffect(() => {
@@ -228,6 +228,7 @@ const CVMonitor: React.FC<CVMonitorProps> = ({ products, onSync }) => {
                        <div className="flex-1 overflow-hidden">
                          <p className="text-xs font-bold text-slate-800 truncate">{p.nama}</p>
                          <p className="text-[9px] text-slate-400 font-mono">{p.id}</p>
+                         <p className="text-[9px] text-slate-500 truncate">{p.category_name || 'Umum'} • {p.product_type || 'cv'}</p>
                        </div>
                        {isSyncing ? <Loader2 size={16} className="animate-spin text-orange-600" /> : <CheckCircle2 size={20} className={p.visual_samples > 0 ? 'text-green-500' : 'text-slate-100 group-hover:text-orange-200'} />}
                      </button>

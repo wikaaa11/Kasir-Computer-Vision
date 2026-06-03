@@ -23,6 +23,18 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
   const [statusMsg, setStatusMsg] = useState<string>("Inisialisasi...");
   const [barcodeInput, setBarcodeInput] = useState<string>('');
 
+  const getPrimaryCatalogProduct = () => {
+    const preferred = productsList.find((product) => {
+      const productName = String(product.nama || product.name || '').toLowerCase();
+      return productName.includes('indomie');
+    });
+
+    return preferred || productsList[0] || null;
+  };
+
+  const primaryCatalogProduct = getPrimaryCatalogProduct();
+  const primaryCatalogLabel = String(primaryCatalogProduct?.nama || primaryCatalogProduct?.name || 'Produk DB');
+
   const fetchProducts = async () => {
     setIsLoadingProducts(true);
     setStatusMsg("Sync Katalog...");
@@ -33,6 +45,7 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
       setStatusMsg(normalized.length > 0 ? "Siap Scan" : "Katalog Kosong");
     } catch (err) {
       console.error("Fetch failed", err);
+      setProductsList([]);
       setStatusMsg("Gagal memuat katalog backend");
     } finally {
       setIsLoadingProducts(false);
@@ -59,6 +72,17 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
         points: product.poin,
         imageUrl: product.foto
       }];
+    });
+  };
+
+  const updateQuantity = (idx: number, quantity: number) => {
+    setCart(prev => {
+      const updated = [...prev];
+      if (quantity <= 0) {
+        return updated.filter((_, i) => i !== idx);
+      }
+      updated[idx].quantity = quantity;
+      return updated;
     });
   };
 
@@ -94,10 +118,23 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
   };
 
   const handleSimulateScan = () => {
-    if (productsList.length === 0 || isProcessing) return;
-    const randomProduct = productsList[Math.floor(Math.random() * productsList.length)];
+    const sourceList = productsList;
+    if (sourceList.length === 0 || isProcessing) return;
+    const randomProduct = sourceList[Math.floor(Math.random() * sourceList.length)];
     addProductToCart(randomProduct);
     setStatusMsg("Berhasil!");
+    setTimeout(() => setStatusMsg("Siap Scan"), 1200);
+  };
+
+  const handleAddDbProduct = () => {
+    if (isProcessing) return;
+    const product = getPrimaryCatalogProduct();
+    if (!product) {
+      setStatusMsg("Belum ada produk di database");
+      return;
+    }
+    addProductToCart(product);
+    setStatusMsg(`${primaryCatalogLabel} ditambahkan`);
     setTimeout(() => setStatusMsg("Siap Scan"), 1200);
   };
 
@@ -111,14 +148,6 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
           <button onClick={onBack} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white/80 backdrop-blur-md rounded-xl text-slate-700 font-bold shadow-sm border border-white text-xs md:text-sm">
             <ArrowLeft size={16} /> Kembali
           </button>
-          <div className="flex items-center gap-2 md:gap-3">
-            <button onClick={fetchProducts} className="p-2 bg-white/80 backdrop-blur-md rounded-xl text-slate-400 hover:text-[#F97316] shadow-sm border border-white transition-colors">
-              <RefreshCw size={18} className={isLoadingProducts ? 'animate-spin' : ''} />
-            </button>
-            <div className="px-3 md:px-4 py-2 bg-slate-900 text-white rounded-xl font-black text-[8px] md:text-xs uppercase tracking-widest">
-              Scanner Mode
-            </div>
-          </div>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center py-10 lg:py-0">
@@ -146,6 +175,14 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
               placeholder="Masukkan barcode produk"
               className="w-full py-3 px-4 bg-white border-2 border-slate-200 rounded-2xl font-bold text-slate-600 focus:outline-none focus:border-[#F97316]"
             />
+            <button
+              onClick={handleAddDbProduct}
+              disabled={isLoadingProducts || isProcessing}
+              className="group py-4 md:py-5 bg-slate-900 border-2 border-slate-900 rounded-[24px] md:rounded-[32px] font-black text-sm md:text-base text-white hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3 shadow-sm disabled:opacity-50"
+            >
+              <Package size={20} className="group-hover:scale-110 transition-transform" />
+              Tambah {primaryCatalogLabel} ke Keranjang
+            </button>
             <button 
               onClick={handleScanByBarcode}
               disabled={isLoadingProducts || isProcessing}
@@ -167,71 +204,84 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
       </div>
 
       {/* Cart Sidebar */}
-      <div className="w-full lg:w-[480px] bg-white flex flex-col z-30 shadow-[-40px_0_80px_rgba(0,0,0,0.05)] border-t lg:border-t-0 lg:border-l border-slate-100 max-h-[55vh] lg:max-h-full">
+      <div className="w-full lg:w-[480px] bg-white flex flex-col z-30 shadow-[-40px_0_80px_rgba(0,0,0,0.05)] border-t lg:border-t-0 lg:border-l border-slate-100 h-[55vh] lg:h-full">
         <div className="p-4 md:p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-[#F97316]/10 rounded-xl md:rounded-2xl flex items-center justify-center text-[#F97316]">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-[#F97316] rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
               <ShoppingCart size={24} />
             </div>
             <div>
-               <h2 className="text-slate-900 font-black text-lg md:text-xl tracking-tight">Keranjang</h2>
-               <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest">Scanner Terhubung</p>
+               <h2 className="text-slate-900 font-black text-lg md:text-2xl tracking-tight">Keranjang</h2>
+               <p className="text-slate-400 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">Scanner Terhubung</p>
             </div>
           </div>
-          <div className="px-3 md:px-4 py-1 md:py-1.5 bg-slate-900 rounded-full text-white font-black text-[8px] md:text-[10px] uppercase tracking-widest">
+          <div className="px-3 md:px-5 py-1.5 md:py-2 bg-slate-900 rounded-full text-white font-black text-[9px] md:text-[11px] uppercase tracking-widest">
             {cart.length} ITEMS
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4 bg-white">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-4 md:space-y-6 bg-white">
           {cart.length === 0 ? (
-            <div className="h-full min-h-[150px] flex flex-col items-center justify-center text-center space-y-4 md:space-y-6 opacity-40">
-              <div className="w-16 h-16 md:w-24 md:h-24 bg-slate-50 rounded-[32px] md:rounded-[40px] flex items-center justify-center border-2 border-dashed border-slate-200">
-                <Package size={40} className="text-slate-200" />
+            <div className="h-full min-h-[150px] flex flex-col items-center justify-center text-center space-y-6 md:space-y-8 opacity-40">
+              <div className="w-20 h-20 md:w-32 md:h-32 bg-slate-50 rounded-[32px] md:rounded-[48px] flex items-center justify-center border-2 border-dashed border-slate-200">
+                <Package size={48} className="text-slate-200" />
               </div>
-              <p className="text-slate-900 font-black text-[10px] uppercase tracking-[0.2em]">Belum ada barang</p>
+              <p className="text-slate-900 font-black text-sm md:text-base uppercase tracking-[0.2em]">Keranjang Kosong</p>
             </div>
           ) : (
             cart.map((item, idx) => (
-              <div key={`${item.id}-${idx}`} className="group relative bg-white border border-slate-100 p-4 md:p-5 rounded-[24px] md:rounded-[32px] flex items-center gap-4 md:gap-5 transition-all hover:shadow-xl">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-50 rounded-xl overflow-hidden flex items-center justify-center border border-slate-100 shadow-inner group-hover:scale-105 transition-transform">
+              <div key={`${item.id}-${idx}`} className="group relative bg-white border border-slate-100 p-4 md:p-6 rounded-[24px] md:rounded-[36px] flex items-center gap-4 md:gap-6 transition-all hover:shadow-2xl">
+                <div className="w-14 h-14 md:w-20 md:h-20 bg-slate-50 rounded-xl md:rounded-[24px] overflow-hidden flex items-center justify-center border border-slate-100 shadow-inner group-hover:scale-110 transition-transform duration-500">
                    {item.imageUrl ? (
                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = "")} />
                    ) : (
-                     <Barcode size={20} className="text-slate-200" />
+                     <Scan size={24} className="text-slate-200" />
                    )}
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-slate-900 font-black text-xs md:text-sm leading-tight truncate">{item.name}</h4>
-                  <p className="text-[#F97316] font-black text-[10px] md:text-xs mt-1">Rp {item.price.toLocaleString('id-ID')}</p>
+                  <h4 className="text-slate-900 font-black text-sm md:text-base leading-tight truncate">{item.name}</h4>
+                  <p className="text-[#F97316] font-black text-[10px] md:text-sm mt-1">Rp {item.price.toLocaleString('id-ID')}</p>
                 </div>
 
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg md:rounded-xl border border-slate-100">
-                  <span className="text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest">Qty</span>
-                  <span className="font-black text-slate-900 text-[10px] md:text-xs">{item.quantity}</span>
+                <div className="flex items-center gap-2 md:gap-3 bg-slate-50 border border-slate-100 px-2.5 md:px-3 py-1.5 rounded-xl md:rounded-2xl shrink-0">
+                  <button 
+                    onClick={() => updateQuantity(idx, item.quantity - 1)}
+                    className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-sm md:text-base transition-all"
+                  >
+                    −
+                  </button>
+                  <span className="font-black text-slate-900 text-sm md:text-base min-w-[20px] text-center">{item.quantity}</span>
+                  <button 
+                    onClick={() => updateQuantity(idx, item.quantity + 1)}
+                    className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-[#F97316] hover:bg-[#EA580C] text-white font-black text-sm md:text-base transition-all"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
             ))
           )}
         </div>
 
-        <div className="p-6 pb-10 md:p-8 bg-slate-900 text-white rounded-t-[32px] md:rounded-t-[40px] shadow-2xl">
-          <div className="flex justify-between items-center mb-6 md:mb-8">
-             <div className="space-y-0.5">
-                <p className="text-white/40 text-[8px] font-black uppercase tracking-[0.3em]">Total Bayar</p>
-                <p className="text-white font-black text-2xl md:text-3xl tracking-tighter">Rp {subtotal.toLocaleString('id-ID')}</p>
+        <div className="p-6 pb-10 md:p-10 bg-slate-900 text-white rounded-t-[32px] md:rounded-t-[50px] shadow-2xl">
+          <div className="flex justify-between items-end mb-6 md:mb-10">
+             <div className="space-y-0.5 md:space-y-1">
+                <p className="text-white/40 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em]">Total Bayar</p>
+                <p className="text-white font-black text-2xl md:text-4xl tracking-tighter">Rp {subtotal.toLocaleString('id-ID')}</p>
              </div>
-             <div className="w-10 h-10 md:w-12 md:h-12 bg-white/10 rounded-xl md:rounded-2xl flex items-center justify-center">
-                <CreditCard size={20} className="text-blue-400" />
+             <div className="text-right">
+                <p className="text-blue-300 font-black text-[8px] md:text-[10px] uppercase tracking-widest mb-0.5 md:mb-1">Cashback</p>
+                <p className="text-white font-black text-base md:text-xl">+0 pts</p>
              </div>
           </div>
 
           <button 
             disabled={cart.length === 0}
             onClick={onFinish}
-            className="w-full py-4 md:py-5 bg-[#F97316] hover:bg-[#EA580C] disabled:bg-white/10 disabled:text-white/20 text-white rounded-[24px] md:rounded-[28px] font-black text-[10px] md:text-xs uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+            className="w-full py-4 md:py-6 bg-[#F97316] hover:bg-[#EA580C] disabled:bg-white/10 disabled:text-white/20 text-white rounded-[24px] md:rounded-[32px] font-black text-[10px] md:text-sm uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 md:gap-4 active:scale-[0.98]"
           >
+            <CreditCard size={22} />
             Checkout
           </button>
         </div>

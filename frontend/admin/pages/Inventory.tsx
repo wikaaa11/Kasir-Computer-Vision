@@ -9,7 +9,6 @@ import {
   X,
   Check,
   Star,
-  CheckCircle,
   Loader2,
   Image as ImageIcon,
   Tag,
@@ -37,7 +36,18 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   
-  const productTypeLabel = adminRole === 'kiosk_admin' ? 'kiosk' : 'computervision';
+  const productTypeLabel = adminRole === 'kiosk_admin' ? 'kiosk' : 'cv';
+  const retailCategory = categories.find((category) => String(category.name || '').trim().toLowerCase() === 'retail');
+
+  const getDefaultCategoryId = () => {
+    if (retailCategory && typeof retailCategory.id !== 'undefined' && retailCategory.id !== null) {
+      return String(retailCategory.id);
+    }
+    if (Array.isArray(categories) && categories.length > 0 && typeof categories[0].id !== 'undefined' && categories[0].id !== null) {
+      return String(categories[0].id);
+    }
+    return 'retail';
+  };
 
   const [newProduct, setNewProduct] = useState({ 
     id: '', 
@@ -48,7 +58,7 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
     deskripsi: '', 
     foto: '',
     product_type: productTypeLabel,
-    category_id: '1'
+    category_id: getDefaultCategoryId()
   });
 
   const getNextProductCode = () => {
@@ -70,8 +80,12 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
   );
 
   const getCategoryName = (categoryId: any) => {
-    const match = categories.find((category) => String(category.id) === String(categoryId));
-    return match?.name || `#${categoryId || '1'}`;
+    const match = categories.find((category) =>
+      String(category.id) === String(categoryId) || String(category.name) === String(categoryId)
+    );
+    if (String(categoryId).toLowerCase() === 'retail') return 'Retail';
+    const categoryName = match?.name || String(categoryId || 'Retail');
+    return productTypeLabel === 'cv' ? 'Retail' : categoryName;
   };
 
   const handleGenerateDesc = async (name: string) => {
@@ -89,6 +103,43 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
     } finally {
       setLoadingAi(false);
     }
+  };
+
+  // PERBAIKAN: Compress image sebelum convert ke base64 untuk hindari packet size error
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Resize jika lebih dari 800px
+          const maxWidth = 800;
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            // Compress dengan quality 0.7 (70%)
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+          } else {
+            reject('Canvas context error');
+          }
+        };
+        img.onerror = () => reject('Image load error');
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject('File read error');
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleBarcodeExtraction = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,13 +185,16 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
     setIsSaving(true);
     
     try {
+      const selectedCategory = categories.find((category) => String(category.id) === String(newProduct.category_id)) || retailCategory;
+      const categoryCode = String(selectedCategory?.name || 'Retail').trim();
+
       const productData = {
         ...newProduct,
         harga: Number(newProduct.harga),
         poin: Number(newProduct.poin),
-        visual_samples: isEditing ? (products.find(p => p.id === newProduct.id)?.visual_samples || 0) : 0,
         product_type: newProduct.product_type || productTypeLabel,
-        category_id: Number(newProduct.category_id || 1),
+        category_id: Number(isNaN(Number(newProduct.category_id)) ? (selectedCategory?.id ?? 1) : Number(newProduct.category_id)),
+        category_code: categoryCode || (String(newProduct.category_id).toLowerCase() === 'retail' ? 'Retail' : undefined),
       };
 
       let success = false;
@@ -153,6 +207,8 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
       if (success) setIsModalOpen(false);
     } catch (err) {
       console.error("Save error:", err);
+      const message = err instanceof Error ? err.message : 'Gagal menyimpan produk.';
+      alert(message);
     } finally {
       setIsSaving(false);
     }
@@ -160,15 +216,21 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
 
   const processDelete = async (id: string) => {
     console.log("Attempting to delete product with ID:", id);
-    const success = await onDeleteProduct(id);
-    if (success) {
-      setDeleteConfirmId(null);
-    } else {
-      alert("Gagal menghapus produk. Silakan periksa koneksi backend API Anda.");
+    try {
+      const success = await onDeleteProduct(id);
+      if (success) setDeleteConfirmId(null);
+    } catch (err) {
+      console.error('Delete error:', err);
+      const message = err instanceof Error ? err.message : 'Gagal menghapus produk.';
+      alert(message);
     }
   };
 
   const openEditModal = (product: any) => {
+    const categoryKey = String(product.category_code || product.category_name || '').trim();
+    const matchedCategoryId = categories.find((c) => String(c.name) === categoryKey)?.id ?? product.category_id ?? '1';
+    const retailCategoryId = categories.find((c) => String(c.name || '').trim().toLowerCase() === 'retail')?.id ?? matchedCategoryId;
+
     setNewProduct({
       id: product.id || '',
       nama: product.nama || '',
@@ -178,7 +240,7 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
       deskripsi: product.deskripsi || '',
       foto: product.foto || '',
         product_type: product.product_type || productTypeLabel,
-        category_id: String(product.category_id || '1')
+        category_id: String(productTypeLabel === 'cv' ? retailCategoryId : matchedCategoryId || '1')
     });
     setIsEditing(true);
     setIsModalOpen(true);
@@ -193,7 +255,7 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
         </div>
         <button onClick={() => { 
           setIsEditing(false); 
-          setNewProduct({ id: getNextProductCode(), nama: '', barcode: '', harga: '', poin: '', deskripsi: '', foto: '', product_type: productTypeLabel, category_id: '1' });
+          setNewProduct({ id: getNextProductCode(), nama: '', barcode: '', harga: '', poin: '', deskripsi: '', foto: '', product_type: productTypeLabel, category_id: getDefaultCategoryId() });
           setIsModalOpen(true); 
         }} className="flex items-center justify-center space-x-2 bg-orange-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-orange-700 transition-all shadow-lg shadow-orange-100">
           <Plus size={20} />
@@ -219,17 +281,15 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
                 <th className="px-6 py-4">Kategori</th>
                 <th className="px-6 py-4">Harga & Poin</th>
                 <th className="px-6 py-4">Product Type</th>
-                <th className="px-6 py-4">Visual Data</th>
                 <th className="px-6 py-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
               {filteredProducts.map((p, idx) => {
-                const vs = p.visual_samples || p.visualSamples || 0;
                 const isDeleting = deleteConfirmId === p.id;
 
                 return (
-                  <tr key={`${p.id}-${idx}`} className={`transition-colors group ${isDeleting ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
+                  <tr key={`${p.id}-${idx}`} className={`transition-colors group ${isDeleting ? 'bg-amber-50' : 'hover:bg-slate-50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <img src={p.foto || 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=100'} alt="" className="w-10 h-10 rounded-lg object-cover border bg-slate-100" />
@@ -244,7 +304,7 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
                     </td>
                     <td className="px-6 py-4">
                       <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-[10px] font-bold uppercase">
-                        {getCategoryName(p.category_id)}
+                        {getCategoryName(p.category_code ?? p.category_name ?? p.category_id)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -252,23 +312,14 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
                       <p className="text-[10px] text-amber-600 font-bold flex items-center"><Star size={10} className="mr-0.5 fill-amber-600" /> {p.poin} Pts</p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-1 bg-orange-50 text-orange-700 rounded-md text-[10px] font-bold uppercase">{p.product_type || 'computervision'}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {vs > 0 ? (
-                        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-black flex items-center w-fit">
-                          <CheckCircle size={10} className="mr-1" /> Ready ({vs})
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded text-[10px] font-black w-fit uppercase tracking-tighter">No Mapping</span>
-                      )}
+                      <span className="px-2 py-1 bg-orange-50 text-orange-700 rounded-md text-[10px] font-bold uppercase">{p.product_type || 'cv'}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       {isDeleting ? (
                         <div className="flex items-center justify-end space-x-2 animate-in fade-in zoom-in-95 duration-200">
                           <button 
                             onClick={() => processDelete(p.id)}
-                            className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-700 shadow-sm"
+                            className="bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-amber-700 shadow-sm"
                           >
                             Ya, Hapus
                           </button>
@@ -291,7 +342,7 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
                           <button 
                             onClick={() => setDeleteConfirmId(p.id)} 
                             title="Hapus" 
-                            className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -303,7 +354,7 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
               })}
               {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center space-y-2">
                        <Search size={32} className="opacity-20" />
                        <p className="font-medium">Tidak ada produk ditemukan</p>
@@ -400,25 +451,64 @@ const Inventory: React.FC<InventoryProps> = ({ adminRole, products, allProducts,
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><LinkIcon size={10} /> Link Foto Produk</label>
-                <div className="flex gap-4">
-                   <div className="flex-1">
-                      <input 
-                        placeholder="https://example.com/image.jpg" 
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" 
-                        value={newProduct.foto} 
-                        onChange={(e) => setNewProduct({...newProduct, foto: e.target.value})} 
-                      />
-                   </div>
-                   <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center shrink-0">
-                      {newProduct.foto ? (
-                        <img src={newProduct.foto} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/150?text=Invalid')} />
-                      ) : (
-                        <ImageIcon size={20} className="text-slate-300" />
-                      )}
-                   </div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><LinkIcon size={10} /> Foto Produk</label>
+                <div className="space-y-3">
+                  {/* Tab untuk URL atau Upload */}
+                  <div className="flex gap-2">
+                    <label className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors text-xs font-bold text-slate-600">
+                      <input type="radio" name="photoMethod" value="url" checked={newProduct.foto?.startsWith('http') || !newProduct.foto?.includes(',') ? true : false} onChange={() => {}} className="w-4 h-4" />
+                      Link URL
+                    </label>
+                    <label className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors text-xs font-bold text-slate-600">
+                      <input type="radio" name="photoMethod" value="upload" checked={newProduct.foto?.includes(',') ? true : false} onChange={() => {}} className="w-4 h-4" />
+                      Upload Folder
+                    </label>
+                  </div>
+
+                  {/* Input URL */}
+                  <div className="flex gap-2">
+                    <input 
+                      placeholder="https://example.com/image.jpg" 
+                      className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" 
+                      value={newProduct.foto?.startsWith('http') ? newProduct.foto : ''} 
+                      onChange={(e) => setNewProduct({...newProduct, foto: e.target.value})} 
+                    />
+                  </div>
+
+                  {/* File Upload */}
+                  <label className="cursor-pointer block">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            const compressed = await compressImage(file);
+                            setNewProduct({...newProduct, foto: compressed});
+                          } catch (error) {
+                            console.error('Compress error:', error);
+                            alert('Gagal memproses gambar. Coba gambar lain.');
+                          }
+                        }
+                      }}
+                    />
+                    <div className="px-4 py-3 bg-orange-50 border-2 border-dashed border-orange-200 rounded-xl flex items-center justify-center gap-2 hover:bg-orange-100 transition-colors">
+                      <ImageIcon size={18} className="text-orange-600" />
+                      <span className="text-sm font-semibold text-orange-700">Klik untuk upload foto dari folder</span>
+                    </div>
+                  </label>
                 </div>
-                <p className="text-[9px] text-slate-400 font-medium">Gunakan URL gambar publik (Unsplash, Imgur, atau Google Drive Direct Link).</p>
+
+                {/* Preview */}
+                {newProduct.foto && (
+                  <div className="w-24 h-24 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center">
+                    <img src={newProduct.foto} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/150?text=Invalid')} />
+                  </div>
+                )}
+                
+                <p className="text-[9px] text-slate-400 font-medium">Upload dari folder atau gunakan URL gambar publik. Gambar akan disimpan sebagai base64.</p>
               </div>
 
               <div className="space-y-1.5">

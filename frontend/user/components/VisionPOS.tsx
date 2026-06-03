@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { Camera, ShoppingCart, Trash2, CreditCard, Loader2, BrainCircuit, Scan, ShieldCheck, AlertCircle, RefreshCw, Package, Sparkles, ArrowLeft } from 'lucide-react';
 import { CartItem } from '../types';
@@ -49,31 +48,60 @@ const VisionPOS: React.FC<VisionPOSProps> = ({ onCheckout, onBack }) => {
   const [lastDetected, setLastDetected] = useState<string>("");
   const [scanAccuracy, setScanAccuracy] = useState<number | null>(null);
 
+  const getPrimaryCatalogProduct = () => {
+    const preferred = productsList.find((product) => {
+      const productName = String(product.nama || product.name || '').toLowerCase();
+      return productName.includes('indomie');
+    });
+
+    return preferred || productsList[0] || null;
+  };
+
+  const primaryCatalogProduct = getPrimaryCatalogProduct();
+  const primaryCatalogLabel = String(primaryCatalogProduct?.nama || primaryCatalogProduct?.name || 'Produk DB');
+
+  // PERBAIKAN: Fungsi penambah keranjang yang lebih pintar (Bisa baca English/Indo)
   const addProductToCart = (product: any, quantity = 1) => {
     setCart(prev => {
-      const idx = prev.findIndex(i => i.id === product.id || i.name === product.nama);
+      const productName = product.name || product.nama || 'Produk';
+      const idx = prev.findIndex(i => i.id === product.id || i.name === productName);
+      
       if (idx > -1) {
         const updated = [...prev];
         updated[idx].quantity += quantity;
         return updated;
       }
+      
       return [
         ...prev,
         {
           id: product.id || Math.random().toString(),
-          name: product.nama || 'Produk',
-          price: Number(product.harga || 0),
+          name: productName,
+          price: Number(product.price || product.harga || 0),
           quantity,
-          points: Number(product.poin || 0),
-          imageUrl: product.foto || ''
+          points: Number(product.cashbackReward || product.points || product.poin || 0),
+          imageUrl: product.image_url || product.imageUrl || product.foto || ''
         }
       ];
     });
   };
 
+  const updateQuantity = (idx: number, quantity: number) => {
+    setCart(prev => {
+      const updated = [...prev];
+      if (quantity <= 0) {
+        return updated.filter((_, i) => i !== idx);
+      }
+      updated[idx].quantity = quantity;
+      return updated;
+    });
+  };
+
   const stopCamera = () => {
+    console.log("📹 Stopping camera stream...");
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => {
+        console.log(`  - Stopping track: ${track.kind} (${track.enabled ? 'enabled' : 'disabled'})`);
         track.stop();
       });
       streamRef.current = null;
@@ -81,6 +109,7 @@ const VisionPOS: React.FC<VisionPOSProps> = ({ onCheckout, onBack }) => {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    console.log("✅ Camera stopped");
   };
 
   const fetchProducts = async () => {
@@ -140,7 +169,6 @@ const VisionPOS: React.FC<VisionPOSProps> = ({ onCheckout, onBack }) => {
         setStatusMsg("Izin Kamera Ditolak");
         return;
       }
-      // Try again with simpler constraints if environment fails
       try {
         const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
         streamRef.current = fallbackStream;
@@ -165,15 +193,55 @@ const VisionPOS: React.FC<VisionPOSProps> = ({ onCheckout, onBack }) => {
   useEffect(() => {
     fetchProducts();
     startCamera();
-    return () => stopCamera();
+
+    // PERBAIKAN: Tambahkan Page Visibility API untuk stop camera saat tab tidak active
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log("🔴 Tab hidden - stop camera");
+        stopCamera();
+      } else {
+        console.log("🟢 Tab visible - restart camera");
+        startCamera();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      console.log("🔴 VisionPOS unmounting - stopping camera");
+      stopCamera();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   const handleCheckoutInternal = () => {
+    console.log("✅ User clicked checkout");
     stopCamera();
     onCheckout(cart);
   };
 
+  const handleAddDbProduct = () => {
+    const dbProduct = getPrimaryCatalogProduct();
+
+    if (!dbProduct) {
+      setStatusMsg('Produk belum ada di database');
+      setErrorHint('Belum ada produk di katalog backend.');
+      setShowError(true);
+      setScanAccuracy(0);
+      return;
+    }
+
+    addProductToCart(dbProduct, 1);
+    setLastDetected(String(dbProduct.nama || dbProduct.name || primaryCatalogLabel));
+    setScanAccuracy(100);
+    setStatusMsg(`${primaryCatalogLabel} dari database ditambahkan`);
+    setShowError(false);
+    setTimeout(() => setStatusMsg('Siap Scan'), 1500);
+    setTimeout(() => setLastDetected(''), 2500);
+  };
+
   const handleBackInternal = () => {
+    console.log("👈 User clicked back button");
     stopCamera();
     onBack();
   };
@@ -186,7 +254,8 @@ const VisionPOS: React.FC<VisionPOSProps> = ({ onCheckout, onBack }) => {
       const matchedProduct = productsList.find(
         (p) =>
           (item.id && p.id === item.id) ||
-          p.nama.toLowerCase().trim() === detectedName
+          p.nama.toLowerCase().trim() === detectedName || 
+          p.name?.toLowerCase().trim() === detectedName // Antisipasi key name
       );
 
       if (!matchedProduct) return 0;
@@ -194,9 +263,9 @@ const VisionPOS: React.FC<VisionPOSProps> = ({ onCheckout, onBack }) => {
       let score = 0;
 
       const idMatches = item.id && matchedProduct.id === item.id;
-      const nameMatches = matchedProduct.nama.toLowerCase().trim() === detectedName;
-      const priceMatches = Number(item.price) === Number(matchedProduct.harga);
-      const pointsMatches = Number(item.points || 0) === Number(matchedProduct.poin || 0);
+      const nameMatches = matchedProduct.nama.toLowerCase().trim() === detectedName || matchedProduct.name?.toLowerCase().trim() === detectedName;
+      const priceMatches = Number(item.price) === Number(matchedProduct.harga || matchedProduct.price);
+      const pointsMatches = Number(item.points || 0) === Number(matchedProduct.poin || matchedProduct.points || matchedProduct.cashbackReward || 0);
 
       if (idMatches || nameMatches) score += 50;
       if (priceMatches) score += 30;
@@ -257,23 +326,44 @@ const VisionPOS: React.FC<VisionPOSProps> = ({ onCheckout, onBack }) => {
       if (detected.length > 0) {
         setScanAccuracy(calculateDetectionAccuracy(detected));
 
+        // DEBUG: Log apa yang di-return backend
+        console.log("📦 Raw detections dari backend:", detected);
+
+        // PERBAIKAN: Dedup hasil deteksi berdasarkan ID/name untuk menghindari duplikat
+        const deduped: { [key: string]: any } = {};
         detected.forEach(item => {
+          const key = item.id || String(item.name || '').toLowerCase();
+          if (deduped[key]) {
+            deduped[key].quantity = (deduped[key].quantity || 1) + (item.quantity || 1);
+          } else {
+            deduped[key] = { ...item, quantity: item.quantity || 1 };
+          }
+        });
+
+        console.log("🔄 Setelah dedup:", Object.values(deduped));
+
+        Object.values(deduped).forEach(item => {
           const originalProduct = productsList.find(
-            p => p.id === item.id || p.nama.toLowerCase() === String(item.name || '').toLowerCase()
+            p => p.id === item.id || 
+                 p.nama.toLowerCase() === String(item.name || '').toLowerCase() ||
+                 (p.name && p.name.toLowerCase() === String(item.name || '').toLowerCase())
           );
           if (originalProduct) {
+            console.log(`➕ Menambahkan ${originalProduct.name} qty=${item.quantity}`);
             addProductToCart(originalProduct, item.quantity || 1);
           } else {
+            // PERBAIKAN: Sesuaikan dengan key bahasa Inggris juga di fallback ini
+            console.log(`➕ Menambahkan fallback ${item.name} qty=${item.quantity}`);
             addProductToCart({
               id: item.id,
-              nama: item.name,
-              harga: item.price,
-              poin: item.points,
-              foto: ''
+              name: item.name,
+              price: item.price,
+              points: item.points,
+              imageUrl: ''
             }, item.quantity || 1);
           }
         });
-        setLastDetected(detected.map(d => d.name).join(", "));
+        setLastDetected(Object.values(deduped).map((d: any) => d.name).join(", "));
         setStatusMsg("Produk Ok!");
         setTimeout(() => setLastDetected(""), 3000);
       } else {
@@ -309,26 +399,24 @@ const VisionPOS: React.FC<VisionPOSProps> = ({ onCheckout, onBack }) => {
 
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalPoints = cart.reduce((sum, item) => sum + ((item.points || 0) * item.quantity), 0);
+  
   return (
     <div className="fixed inset-0 bg-[#F8FAFC] flex flex-col lg:flex-row overflow-hidden font-['Plus_Jakarta_Sans']">
       <canvas ref={canvasRef} className="hidden" />
       
       <div className="flex-1 relative flex flex-col bg-white overflow-hidden">
         <video ref={videoRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover grayscale-[0.2]" />
-        
-        <div className="absolute top-4 left-4 md:top-6 md:left-6 flex items-center gap-3 md:gap-4 bg-white/90 backdrop-blur-xl p-3 md:p-4 rounded-[20px] md:rounded-[28px] shadow-2xl border border-white z-20 pointer-events-auto">
-           <div className="w-10 h-10 md:w-12 md:h-12 bg-[#F97316] rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg">
-              <BrainCircuit className="text-white" size={24} />
-           </div>
-           <div className="pr-2 md:pr-4">
-              <h1 className="text-slate-900 font-black text-base md:text-xl tracking-tighter uppercase leading-none">Vision AI</h1>
-              <p className="text-[#F97316] text-[8px] md:text-[9px] font-black tracking-[0.2em] uppercase mt-1">
-                {isLoadingProducts ? 'Syncing...' : 'Katalog Online'}
-              </p>
-           </div>
-           <button onClick={fetchProducts} className="p-1.5 md:p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-colors">
-              <RefreshCw size={18} className={isLoadingProducts ? 'animate-spin' : ''} />
-           </button>
+
+        <div className="absolute top-4 left-4 md:top-6 md:left-6 flex items-center gap-3 md:gap-4 bg-white/90 backdrop-blur-xl p-3 md:p-4 rounded-[20px] md:rounded-[28px] shadow-2xl border border-white z-20 pointer-events-auto max-w-[240px] md:max-w-none">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-[#F97316] rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg">
+            <Sparkles className="text-white" size={22} />
+          </div>
+          <div className="pr-2 md:pr-4">
+            <h1 className="text-slate-900 font-black text-sm md:text-xl tracking-tighter uppercase leading-none">Reminder!</h1>
+            <p className="text-[#F97316] text-[8px] md:text-[9px] font-black tracking-[0.2em] uppercase mt-1">
+              Arahkan barang ke kamera satu per satu
+            </p>
+          </div>
         </div>
 
         <div className="absolute inset-0 pointer-events-none border-[16px] md:border-[32px] border-white/20">
@@ -376,12 +464,6 @@ const VisionPOS: React.FC<VisionPOSProps> = ({ onCheckout, onBack }) => {
           <div className="bg-slate-900/80 backdrop-blur-xl px-6 md:px-8 py-2 md:py-3 rounded-xl md:rounded-2xl border border-white/10 shadow-2xl">
              <span className="text-white text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em]">{statusMsg}</span>
           </div>
-
-          <div className="bg-white/90 backdrop-blur-xl px-4 md:px-5 py-1.5 md:py-2 rounded-full border border-slate-200 shadow-lg">
-            <span className="text-slate-700 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">
-              Akurasi: {scanAccuracy === null ? '--' : `${scanAccuracy}%`}
-            </span>
-          </div>
         </div>
       </div>
 
@@ -425,12 +507,30 @@ const VisionPOS: React.FC<VisionPOSProps> = ({ onCheckout, onBack }) => {
                   <p className="text-[#F97316] font-black text-[10px] md:text-sm mt-1">Rp {item.price.toLocaleString('id-ID')}</p>
                 </div>
 
-                <button 
-                  onClick={() => setCart(prev => prev.filter((_, i) => i !== idx))}
-                  className="w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl flex items-center justify-center text-slate-300 hover:text-red-500 transition-all"
-                >
-                  <Trash2 size={18} />
-                </button>
+                <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                  <div className="flex items-center gap-2 md:gap-3 bg-slate-50 border border-slate-100 px-2.5 md:px-3 py-1.5 rounded-xl md:rounded-2xl">
+                    <button 
+                      onClick={() => updateQuantity(idx, item.quantity - 1)}
+                      className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-sm md:text-base transition-all"
+                    >
+                      −
+                    </button>
+                    <span className="font-black text-slate-900 text-sm md:text-base min-w-[20px] text-center">{item.quantity}</span>
+                    <button 
+                      onClick={() => updateQuantity(idx, item.quantity + 1)}
+                      className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-[#F97316] hover:bg-[#EA580C] text-white font-black text-sm md:text-base transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <button 
+                    onClick={() => setCart(prev => prev.filter((_, i) => i !== idx))}
+                    className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl flex items-center justify-center bg-red-50 text-red-300 hover:text-red-500 hover:bg-red-100 transition-all"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))
           )}

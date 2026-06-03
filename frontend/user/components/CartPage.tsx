@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Trash2, Plus, Minus, ArrowRight, Ticket, Sparkles, Coins } from 'lucide-react';
+import { ArrowRight, Ticket, Sparkles, Coins } from 'lucide-react';
 import { CartItem, Voucher } from '../types';
 
 interface CartPageProps {
@@ -30,7 +30,7 @@ const CartPage: React.FC<CartPageProps> = ({
       return {
         bg: 'bg-slate-900 text-white shadow-xl shadow-slate-200',
         iconBg: 'bg-slate-800 text-[#F97316]',
-        icon: <Ticket size={32} />,
+        icon: <Ticket size={24} />,
         title: t.membershipCard,
         desc: t.hasMembershipDesc,
         button: (
@@ -47,7 +47,7 @@ const CartPage: React.FC<CartPageProps> = ({
     return {
       bg: 'bg-[#F97316] text-white shadow-xl shadow-orange-200',
       iconBg: 'bg-white/20',
-      icon: <Sparkles size={32} />,
+      icon: <Sparkles size={24} />,
       title: t.activeMemberPortal,
       desc: t.activeMemberDesc,
       button: (
@@ -91,22 +91,10 @@ const CartPage: React.FC<CartPageProps> = ({
                     </div>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-4 md:gap-6">
-                    <div className="flex items-center gap-3 md:gap-4 bg-slate-50 px-2 md:px-3 py-1.5 md:py-2 rounded-xl md:rounded-2xl">
-                      <button 
-                        onClick={() => onUpdateQuantity(item.id, -1)} 
-                        className="text-slate-400 hover:text-slate-800 transition-colors"
-                      >
-                        <Minus size={14}/>
-                      </button>
+                    <div className="flex items-center gap-2 bg-slate-50 px-3 md:px-4 py-1.5 md:py-2 rounded-xl md:rounded-2xl border border-slate-100">
+                      <span className="text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest">Qty</span>
                       <span className="w-6 md:w-8 text-center font-black text-base md:text-lg text-slate-900">{item.quantity}</span>
-                      <button 
-                        onClick={() => onUpdateQuantity(item.id, 1)} 
-                        className="text-slate-400 hover:text-slate-800 transition-colors"
-                      >
-                        <Plus size={14}/>
-                      </button>
                     </div>
-                    <button onClick={() => onRemoveItem(item.id)} className="text-red-200 hover:text-red-500 transition-colors"><Trash2 size={18}/></button>
                   </div>
                 </div>
               ))}
@@ -115,7 +103,7 @@ const CartPage: React.FC<CartPageProps> = ({
 
           <div className={`rounded-[32px] md:rounded-[40px] p-6 md:p-8 flex flex-col sm:flex-row items-center gap-4 md:gap-6 transition-all duration-500 ${card.bg}`}>
             <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[24px] flex items-center justify-center shrink-0 ${card.iconBg}`}>
-              {React.cloneElement(card.icon as React.ReactElement, { size: 24 })}
+              {card.icon}
             </div>
             <div className="flex-1 text-center sm:text-left min-w-0">
               <h3 className="font-black text-base md:text-lg truncate">{card.title}</h3>

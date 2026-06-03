@@ -152,15 +152,16 @@ def run_detection(image_base64: str, catalog: Any = None) -> dict[str, Any]:
     if not isinstance(normalized_catalog, list):
         normalized_catalog = []
 
+    # Prefer database as source of truth; fallback to Google Sheet if DB empty/unavailable
     if not normalized_catalog:
         try:
-            normalized_catalog = _fetch_catalog_from_google_sheet()
+            normalized_catalog = _fetch_catalog_from_database()
         except Exception:
             normalized_catalog = []
 
     if not normalized_catalog:
         try:
-            normalized_catalog = _fetch_catalog_from_database()
+            normalized_catalog = _fetch_catalog_from_google_sheet()
         except Exception:
             normalized_catalog = []
 

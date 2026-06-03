@@ -60,7 +60,7 @@ const PaymentQRIS: React.FC<PaymentQRISProps> = ({ onBack, onSuccess, total, t }
         <div className="relative p-2 md:p-5 bg-slate-50 rounded-[24px] md:rounded-[34px] mb-2 md:mb-4 vision-shadow">
           <div className="bg-white p-1.5 md:p-3 rounded-xl md:rounded-2xl">
             <img 
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=VP_${total}_${Date.now()}`} 
+              src="/QRIS%20NGOLAB_page-0001.jpg" 
               alt="QRIS Code" 
               className="w-24 h-24 md:w-40 md:h-40"
             />

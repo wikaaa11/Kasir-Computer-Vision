@@ -14,6 +14,52 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, onRefresh }) 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  const getCvItems = (transaction: any) => {
+    if (!Array.isArray(transaction.items)) return [];
+    return transaction.items;
+  };
+
+  const getItemsSummary = (transaction: any) => {
+    const cleanSummary = (text: string) => {
+      // Hapus pattern " x1", " x2", etc
+      return text.replace(/\s+x\d+\s*$/g, '').trim();
+    };
+
+    const cvItems = getCvItems(transaction);
+
+    if (cvItems.length > 0) {
+      return cvItems.map((item: any) => {
+        const itemName = item.productName || item.product_name_snapshot || item.name || item.product_code || item.productCode || 'Item';
+        const qty = Number(item.qty || 1);
+        return qty > 1 ? `${itemName} x${qty}` : itemName;
+      }).join(', ');
+    }
+
+    return transaction.nama_produk || transaction.name || '-';
+  };
+
+  const getTransactionRows = (transaction: any) => {
+    const cvItems = getCvItems(transaction);
+
+    if (cvItems.length === 0) {
+      return [
+        {
+          transaction,
+          item: null,
+          rowId: `${transaction.id_transaksi || transaction.id || 'tx'}-summary`,
+          itemIndex: 0,
+        },
+      ];
+    }
+
+    return cvItems.map((item: any, itemIndex: number) => ({
+      transaction,
+      item,
+      rowId: `${transaction.id_transaksi || transaction.id || 'tx'}-${itemIndex}`,
+      itemIndex,
+    }));
+  };
+
   const getTransactionTimestamp = (transaction: any) => {
     const dateVal = transaction.tanggal || transaction.time || transaction.date || transaction.created_at || '';
     const parsed = dateVal ? new Date(dateVal) : null;
@@ -26,7 +72,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, onRefresh }) 
 
   const filteredTransactions = sortedTransactions.filter(t => {
     const id = (t.id_transaksi || t.id || '').toString().toLowerCase();
-    const name = (t.nama_produk || t.name || '').toString().toLowerCase();
+    const name = getItemsSummary(t).toString().toLowerCase();
     const query = searchQuery.toLowerCase();
     
     // Date filtering logic
@@ -51,6 +97,8 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, onRefresh }) 
 
     return (id.includes(query) || name.includes(query)) && matchesDate;
   });
+
+  const displayRows = filteredTransactions.flatMap((transaction) => getTransactionRows(transaction));
 
   const totalSales = sortedTransactions.reduce((sum, t) => sum + (Number(t.total) || 0), 0);
 
@@ -78,18 +126,22 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, onRefresh }) 
   
   const handleExportPDF = () => {
     const columns = ["Waktu", "Tanggal", "ID Transaksi", "Produk", "Harga", "Qty", "Total", "Metode"];
-    const exportTransactions = [...filteredTransactions];
-    const data = exportTransactions.map(t => {
-      const dateVal = t.tanggal || t.time || t.date || "-";
+    const data = displayRows.map(({ transaction, item }) => {
+      const dateVal = transaction.tanggal || transaction.time || transaction.date || "-";
+      const itemName = item
+        ? (item.productName || item.product_name_snapshot || item.name || item.product_code || item.productCode || 'Item')
+        : (transaction.nama_produk || transaction.name || '-');
+      const itemPrice = item ? Number(item.price_snapshot ?? item.price ?? 0) : Number(transaction.harga || 0);
+      const itemQty = item ? Number(item.qty || 1) : Number(transaction.qty || 1);
       return [
         formatTime(dateVal),
         formatDate(dateVal),
-        t.id_transaksi || t.id || "-",
-        t.nama_produk || t.name || "-",
-        `Rp ${Number(t.harga).toLocaleString()}`,
-        t.qty,
-        `Rp ${Number(t.total).toLocaleString()}`,
-        t.metode_bayar || t.payment_method || 'QRIS'
+        transaction.id_transaksi || transaction.id || "-",
+        itemName,
+        `Rp ${itemPrice.toLocaleString('id-ID')}`,
+        itemQty,
+        `Rp ${Number(transaction.total).toLocaleString('id-ID')}`,
+        transaction.metode_bayar || transaction.payment_method || 'QRIS'
       ];
     });
 
@@ -111,7 +163,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, onRefresh }) 
        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Transaction History</h1>
-          <p className="text-slate-500 text-sm">Log transaksi real-time langsung dari Google Spreadsheet.</p>
+          <p className="text-slate-500 text-sm">Log transaksi real-time langsung dari database pusat.</p>
         </div>
         <div className="flex items-center space-x-2">
           <button onClick={onRefresh} className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:bg-slate-50 transition-colors shadow-sm">
@@ -142,7 +194,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, onRefresh }) 
             <h3 className="text-3xl font-bold text-slate-800">
               {[...new Set(sortedTransactions.map(t => t.id_transaksi || t.id))].length}
             </h3>
-            <span className="text-[10px] bg-green-50 text-green-600 px-2 py-1 rounded-full font-bold">Aktif</span>
+            <span className="text-[10px] bg-green-50 text-green-600 px-2 py-1 rounded-full font-bold">DB</span>
           </div>
         </div>
 
@@ -215,14 +267,22 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, onRefresh }) 
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {filteredTransactions.map((t, idx) => {
+              {displayRows.map(({ transaction: t, item, rowId, itemIndex }) => {
                 const dateVal = t.tanggal || t.time || t.date || "-";
                 const transId = t.id_transaksi || t.id || "-";
-                const prodName = t.nama_produk || t.name || "-";
+                const prodName = item
+                  ? (item.productName || item.product_name_snapshot || item.name || item.product_code || item.productCode || 'Item')
+                  : getItemsSummary(t);
                 const payMethod = t.metode_bayar || t.payment_method || 'QRIS';
+                const itemCount = Number(getCvItems(t).length);
+                const itemPrice = item ? Number(item.price_snapshot ?? item.price ?? 0) : Number(t.harga || 0);
+                const itemQty = item ? Number(item.qty || 1) : Number(t.qty || 1);
+                const itemLabel = item
+                  ? `${itemQty} item`
+                  : (itemCount > 0 ? `${itemCount} item` : '1 item');
 
                 return (
-                  <tr key={idx} className="hover:bg-slate-50/80 transition-colors group">
+                  <tr key={rowId} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-slate-50 text-slate-400 group-hover:text-orange-500 group-hover:bg-orange-50 rounded-lg transition-colors">
@@ -237,10 +297,17 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, onRefresh }) 
                     <td className="px-6 py-4">
                       <span className="text-orange-600 font-mono text-xs font-bold bg-orange-50 px-2 py-1 rounded-md">{transId}</span>
                     </td>
-                    <td className="px-6 py-4 font-medium text-slate-800">{prodName}</td>
-                    <td className="px-6 py-4 text-slate-500">Rp {Number(t.harga).toLocaleString()}</td>
-                    <td className="px-6 py-4 text-center font-bold text-slate-700">{t.qty}</td>
-                    <td className="px-6 py-4 font-black text-slate-900">Rp {Number(t.total).toLocaleString()}</td>
+                    <td className="px-6 py-4 font-medium text-slate-800">
+                      <div className="flex flex-col gap-1">
+                        <span>{prodName}</span>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-widest">
+                          {itemLabel}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-500">Rp {itemPrice.toLocaleString('id-ID')}</td>
+                    <td className="px-6 py-4 text-center font-bold text-slate-700">{itemQty}</td>
+                    <td className="px-6 py-4 font-black text-slate-900">Rp {Number(t.total).toLocaleString('id-ID')}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-1.5 text-orange-600 font-black text-[10px] uppercase">
                         <QrCode size={12} />
@@ -256,8 +323,8 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, onRefresh }) 
                     <div className="flex flex-col items-center justify-center space-y-3 opacity-40">
                        {/* This icon now correctly refers to the lucide-react component */}
                        <History size={48} />
-                       <p className="font-medium text-sm">Belum ada transaksi terekam.</p>
-                       <p className="text-xs">Coba lakukan transaksi baru di aplikasi kasir.</p>
+                       <p className="font-medium text-sm">Belum ada transaksi dari database pusat.</p>
+                       <p className="text-xs">Coba lakukan transaksi baru di aplikasi kasir lalu refresh.</p>
                     </div>
                   </td>
                 </tr>

@@ -98,13 +98,23 @@ const App: React.FC = () => {
         points_used: pointsUsed,
         order_type: 'computervision',
       },
-      items: cart.map((item) => ({
-        product_code: item.id,
-        product_name_snapshot: item.name,
-        price_snapshot: item.price,
-        qty: item.quantity,
-        subtotal: item.price * item.quantity,
-      })),
+      items: cart.map((item) => {
+        const numericId = Number((item as any).product_id ?? item.id);
+        const payloadItem: any = {
+          product_name_snapshot: item.name,
+          price_snapshot: item.price,
+          qty: item.quantity,
+          subtotal: item.price * item.quantity,
+        };
+
+        if (Number.isFinite(numericId) && numericId > 0) {
+          payloadItem.product_id = numericId;
+        } else {
+          payloadItem.product_code = String(item.id);
+        }
+
+        return payloadItem;
+      }),
     };
 
     try {

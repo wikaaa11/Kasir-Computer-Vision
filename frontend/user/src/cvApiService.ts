@@ -1,10 +1,19 @@
 export interface CvProduct {
-  product_code: string;
-  product_name: string;
-  price: number;
+  // --- PERBAIKAN: Dibikin super fleksibel untuk menangkap semua kemungkinan key dari API pusat ---
+  id?: string;
+  product_code?: string;
+  name?: string; 
+  product_name?: string;
+  price?: number;
+  harga?: number;
   barcode?: string | null;
   image_url?: string | null;
+  image?: string | null;
+  foto?: string | null;
+  category?: string | null;
+  category_code?: string | null;
   category_name?: string | null;
+  cashbackReward?: number | null;
   cashback_reward?: number | null;
   points?: number | null;
 }
@@ -64,7 +73,7 @@ type ApiEnvelope<T> = {
   vouchers?: CvVoucher[];
 };
 
-const CV_API_BASE_URL = (import.meta.env.VITE_CV_API_BASE_URL || "http://localhost:4000").replace(/\/$/, "");
+const CV_API_BASE_URL = (import.meta.env.VITE_CV_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
 
 const buildUrl = (path: string) => `${CV_API_BASE_URL}${path}`;
 
@@ -125,12 +134,27 @@ const requestJson = async <T>(path: string, init?: RequestInit): Promise<T> => {
 };
 
 export const toCatalogProduct = (product: CvProduct) => ({
-  id: String(product.product_code || "").trim(),
-  nama: String(product.product_name || "Produk").trim() || "Produk",
-  harga: Number(product.price || 0),
-  poin: Number(product.points ?? product.cashback_reward ?? 0),
-  foto: String(product.image_url || "").trim(),
-  kategori: String(product.category_name || "Umum").trim() || "Umum",
+  // --- PERBAIKAN: Menyesuaikan output agar bisa dibaca oleh UI dan Python ---
+  id: String(product.id || product.product_code || "").trim(),
+  
+  // Mengirim nama produk (dipakai UI)
+  nama: String(product.name || product.product_name || "Produk").trim() || "Produk",
+  // Mengirim name (dipakai Python AI)
+  name: String(product.name || product.product_name || "Produk").trim() || "Produk",
+  
+  // Mengirim harga
+  harga: Number(product.price || product.harga || 0),
+  price: Number(product.price || product.harga || 0),
+  
+  // Mengirim poin/cashback
+  poin: Number(product.points ?? product.cashbackReward ?? product.cashback_reward ?? 0),
+  points: Number(product.points ?? product.cashbackReward ?? product.cashback_reward ?? 0),
+  
+  // Mengirim link foto (WAJIB ADA BIAR FALLBACK AI JALAN)
+  foto: String(product.image_url || product.image || product.foto || "").trim(),
+  image_url: String(product.image_url || product.image || product.foto || "").trim(),
+  
+  kategori: String(product.category || product.category_code || product.category_name || "Umum").trim() || "Umum",
   barcode: String(product.barcode || "").trim(),
 });
 

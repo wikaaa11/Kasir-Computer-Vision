@@ -44,18 +44,74 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
   const totalItems = transactions.reduce((sum, tx) => sum + (Number(tx.qty) || 0), 0);
   const uniqueCustomers = [...new Set(transactions.map(tx => tx.id_transaksi || tx.id))].length;
 
-  // Membalikkan data agar yang terbaru ada di paling atas untuk dashboard
-  const latestTransactions = [...transactions].reverse().slice(0, 5);
+  const getTransactionTimestamp = (transaction: any) => {
+    const dateVal = transaction.created_at || transaction.time || transaction.tanggal || transaction.date || '';
+    const parsed = dateVal ? new Date(dateVal) : null;
+    return parsed && !isNaN(parsed.getTime()) ? parsed.getTime() : 0;
+  };
 
-  // Data chart sederhana
-  const chartData = [
-    { name: '08:00', revenue: totalRevenue * 0.1 },
-    { name: '10:00', revenue: totalRevenue * 0.15 },
-    { name: '12:00', revenue: totalRevenue * 0.3 },
-    { name: '14:00', revenue: totalRevenue * 0.1 },
-    { name: '16:00', revenue: totalRevenue * 0.2 },
-    { name: '18:00', revenue: totalRevenue * 0.15 },
-  ];
+  // Gunakan sorting berbasis timestamp agar konsisten dengan halaman Transactions.
+  const latestTransactions = [...transactions]
+    .sort((a, b) => getTransactionTimestamp(b) - getTransactionTimestamp(a))
+    .slice(0, 5);
+
+  const formatItemLabel = (item: any) => {
+    const itemName = item.productName || item.product_name_snapshot || item.name || item.product_code || item.productCode || 'Item';
+    const qty = Number(item.qty || 1);
+    return qty > 1 ? `${itemName} x${qty}` : itemName;
+  };
+
+  const getItemsSummary = (transaction: any) => {
+    if (typeof transaction.items_summary === 'string' && transaction.items_summary.trim()) {
+      return transaction.items_summary;
+    }
+
+    if (typeof transaction.itemsSummary === 'string' && transaction.itemsSummary.trim()) {
+      return transaction.itemsSummary;
+    }
+
+    if (Array.isArray(transaction.items) && transaction.items.length > 0) {
+      return transaction.items.map((item: any) => {
+        const itemName = item.productName || item.product_name_snapshot || item.name || item.product_code || item.productCode || 'Item';
+        const qty = Number(item.qty || 1);
+        return qty > 1 ? `${itemName} x${qty}` : itemName;
+      }).join(', ');
+    }
+
+    return transaction.nama_produk || transaction.name || '-';
+  };
+
+  // Generate chart data dari transaksi real (per bulan)
+  const generateRevenueByMonth = () => {
+    const monthlyRevenue: Record<number, number> = {};
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Extract bulan dari setiap transaksi dan accumulate revenue
+    transactions.forEach((tx) => {
+      const timestamp = tx.created_at || tx.time || tx.tanggal || tx.date || '';
+      if (timestamp) {
+        try {
+          const date = new Date(timestamp);
+          if (!isNaN(date.getTime())) {
+            const month = date.getMonth(); // 0-11
+            monthlyRevenue[month] = (monthlyRevenue[month] || 0) + (Number(tx.total) || 0);
+          }
+        } catch {
+          // Ignore parsing errors
+        }
+      }
+    });
+
+    // Create array untuk semua 12 bulan
+    const allMonths = Array.from({ length: 12 }, (_, i) => ({
+      name: monthNames[i],
+      revenue: monthlyRevenue[i] || 0
+    }));
+
+    return allMonths;
+  };
+
+  const chartData = generateRevenueByMonth();
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -92,8 +148,21 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-              <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-              <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{fill: '#64748b', fontSize: 10}}
+                domain={[500000, 10000000]}
+                ticks={[500000, 5000000, 10000000]}
+                tickFormatter={(value) => {
+                  if (value >= 1000000) return `${(value / 1000000).toLocaleString()} jt`;
+                  return `${(value / 1000).toLocaleString()}rb`;
+                }}
+              />
+              <Tooltip 
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                formatter={(value) => `Rp ${Number(value).toLocaleString()}`}
+              />
               <Area type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
             </AreaChart>
           </ResponsiveContainer>
@@ -103,7 +172,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <h3 className="font-bold text-slate-800">Live Transaction Stream</h3>
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menampilkan 5 Pesanan Terakhir</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menampilkan 5 transaksi Terakhir</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -117,17 +186,24 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {latestTransactions.map((tx, idx) => {
-                const transId = tx.id_transaksi || tx.id || "-";
-                const prodName = tx.nama_produk || tx.name || tx.items || "-";
-                
+                const transId = tx.id_transaksi || tx.id || '-';
+                const items = Array.isArray(tx.items) ? tx.items : [];
+                const primaryProduct = items.length > 0 ? formatItemLabel(items[0]) : getItemsSummary(tx);
+                const itemCount = items.length > 0 ? items.length : Number(tx.item_count ?? tx.qty ?? 1);
+
                 return (
-                  <tr key={idx} className="hover:bg-slate-50 transition-colors group">
+                  <tr key={`${transId}-${idx}`} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4">
                       <span className="font-mono font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded text-xs">
                         {transId}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-700 font-medium">{prodName}</td>
+                    <td className="px-6 py-4 text-slate-700 font-medium">
+                      <div className="flex flex-col gap-1">
+                        <span>{primaryProduct}</span>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-widest">{itemCount} ITEM</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 font-black text-slate-900">Rp {Number(tx.total).toLocaleString()}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-green-600 font-bold text-[10px] uppercase">

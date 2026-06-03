@@ -25,8 +25,10 @@ const ScanningPage: React.FC<ScanningPageProps> = ({ onBack, onCapture }) => {
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   const stopCamera = () => {
+    console.log("📹 Stopping camera stream...");
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => {
+        console.log(`  - Stopping track: ${track.kind} (${track.enabled ? 'enabled' : 'disabled'})`);
         track.stop();
       });
       streamRef.current = null;
@@ -34,6 +36,7 @@ const ScanningPage: React.FC<ScanningPageProps> = ({ onBack, onCapture }) => {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    console.log("✅ Camera stopped");
   };
 
   const setupCamera = async () => {
@@ -90,12 +93,29 @@ const ScanningPage: React.FC<ScanningPageProps> = ({ onBack, onCapture }) => {
 
   useEffect(() => {
     setupCamera();
+
+    // PERBAIKAN: Tambahkan Page Visibility API untuk stop camera saat tab tidak active
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log("🔴 Tab hidden - stop camera");
+        stopCamera();
+      } else {
+        console.log("🟢 Tab visible - restart camera");
+        setupCamera();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
+      console.log("🔴 ScanningPage unmounting - stopping camera");
       stopCamera();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
   const handleBackInternal = () => {
+    console.log("👈 User clicked back button");
     stopCamera();
     onBack();
   };
