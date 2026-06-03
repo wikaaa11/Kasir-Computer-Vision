@@ -189,16 +189,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
-      <Layout 
-        lang={lang} 
-        onLangChange={setLang}
-        hideHeaderFooter={[ViewState.POS, ViewState.MEMBERSHIP_SCAN, ViewState.SELECT_VOUCHER, ViewState.PAYMENT_QRIS, ViewState.SUCCESS, ViewState.SCANNING_BARCODE].includes(view)}
-        t={translations[lang].layout}
-      >
-        {renderView()}
-      </Layout>
-    </div>
+    <Layout
+      lang={lang}
+      onLangChange={setLang}
+      hideHeaderFooter={[ViewState.POS, ViewState.MEMBERSHIP_SCAN, ViewState.SELECT_VOUCHER, ViewState.PAYMENT_QRIS, ViewState.SUCCESS, ViewState.SCANNING_BARCODE].includes(view)}
+      t={translations[lang].layout}
+    >
+      {renderView()}
+    </Layout>
   );
 };
 

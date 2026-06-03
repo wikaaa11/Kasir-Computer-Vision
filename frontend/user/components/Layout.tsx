@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Globe, HelpCircle } from 'lucide-react';
+import { Globe, User, ChevronDown } from 'lucide-react';
 import { Language } from '../types';
 
 interface LayoutProps {
@@ -15,49 +15,59 @@ const Layout: React.FC<LayoutProps> = ({ children, hideHeaderFooter = false, lan
   if (hideHeaderFooter) return <div className="flex-1 flex flex-col">{children}</div>;
 
   return (
-    <div className="flex-1 flex flex-col w-full px-4 md:px-6 py-4 md:py-8">
-      {/* Header */}
-      <header className="flex justify-between items-center mb-8 md:mb-12 max-w-[1600px] mx-auto w-full">
-        <div className="flex items-center gap-2 md:gap-3">
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-lg md:rounded-xl flex items-center justify-center vision-shadow overflow-hidden border border-slate-100">
-            <img 
-              src="/logo.jpeg" 
-              alt="Ngolab Logo" 
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
+    <div className="flex-1 flex flex-col w-full min-h-screen bg-[#F8FAFC]">
+      {/* ── HEADER ── */}
+      <header className="w-full bg-white border-b border-slate-100 sticky top-0 z-50">
+        <div className="w-full px-4 md:px-8 lg:px-12 h-16 flex items-center justify-between">
+          {/* Logo - Left */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 overflow-hidden flex-shrink-0">
+              <img
+                src="/logo.jpeg"
+                alt="Ngolab Logo"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+            <div className="leading-none">
+              <p className="text-base font-extrabold text-[#0F172A] tracking-tight">Ngolab</p>
+              <p className="text-[9px] font-bold text-[#F97316] tracking-[0.18em] uppercase">Computer-Vision</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg md:text-xl font-bold text-[#0F172A] leading-none">Ngolab</h1>
-            <p className="text-[8px] md:text-[10px] font-semibold text-[#F97316] tracking-widest uppercase">computer-vision</p>
+
+          {/* Right controls */}
+          <div className="flex items-center gap-3">
+            {/* Language toggle */}
+            <button
+              onClick={() => onLangChange(lang === 'id' ? 'en' : 'id')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all text-xs font-semibold"
+            >
+              <Globe size={13} />
+              {lang === 'id' ? 'Indonesia' : 'English'}
+              <ChevronDown size={12} className="text-slate-400" />
+            </button>
+
+            {/* User icon */}
+            <button className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-all">
+              <User size={16} />
+            </button>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2 md:gap-4">
-          <button 
-            onClick={() => onLangChange(lang === 'id' ? 'en' : 'id')}
-            className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors text-xs md:text-sm font-medium"
-          >
-            <Globe size={14} />
-            {lang === 'id' ? 'Indonesia' : 'English'}
-          </button>
-          <button className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors text-xs md:text-sm font-medium">
-            <HelpCircle size={14} />
-            <span className="hidden xs:inline">{t.help}</span>
-          </button>
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* ── MAIN ── */}
       <main className="flex-1 flex flex-col w-full">
-        <div className="w-full max-w-[1600px] mx-auto flex flex-col flex-1 items-center justify-center px-4 md:px-6">
-          {children}
-        </div>
+        {children}
       </main>
 
-      {/* Footer */}
-      <footer className="mt-12 text-center text-slate-400 text-xs max-w-[1600px] mx-auto w-full">
-        <p>{t.copyright}</p>
+      {/* ── FOOTER ── */}
+      <footer className="w-full border-t border-slate-100 bg-white py-4">
+        <p className="text-center text-slate-400 text-xs">
+          {t?.copyright ?? '© 2024 Ngolab System • YOLO Vision • Belanja Tanpa Antre'}
+        </p>
       </footer>
     </div>
   );

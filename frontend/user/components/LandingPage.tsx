@@ -1,97 +1,292 @@
-
 import React from 'react';
-import { Camera, Zap, QrCode, UserPlus, Sparkles, ShoppingBasket, Clock } from 'lucide-react';
+import {
+  Camera,
+  Zap,
+  ShieldCheck,
+  Target,
+  ArrowRight,
+  Gift,
+  Percent,
+  QrCode,
+  Users,
+} from 'lucide-react';
 
 interface LandingPageProps {
   onStart: () => void;
   t: any;
 }
 
+const Check = () => (
+  <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+    <svg
+      className="w-3 h-3 text-green-500"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={3}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  </div>
+);
+
+const ProductCard = ({
+  name,
+  sub,
+  price,
+  img,
+}: {
+  name: string;
+  sub: string;
+  price: string;
+  img: string;
+}) => (
+  <div className="bg-white rounded-2xl border border-slate-100 px-3 py-2.5 flex items-center gap-3 min-w-[170px] shadow-[0_14px_35px_rgba(15,23,42,0.16)] hover:shadow-[0_18px_45px_rgba(15,23,42,0.20)] transition-all duration-300">
+    <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
+      <img
+        src={img}
+        alt={name}
+        className="max-w-full max-h-full object-contain"
+      />
+    </div>
+
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-bold text-slate-800 leading-tight truncate">
+          {name}
+        </p>
+        <Check />
+      </div>
+      <p className="text-[10px] text-slate-400 truncate">{sub}</p>
+      <p className="text-sm font-extrabold text-slate-900 mt-0.5">{price}</p>
+    </div>
+  </div>
+);
+
+const FeatureItem = ({
+  icon,
+  title,
+  desc,
+  color,
+  bg,
+  border,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  color: string;
+  bg: string;
+  border: string;
+}) => (
+  <div className="flex items-center gap-4 px-4 md:px-5 py-4 lg:border-r lg:last:border-r-0 border-slate-200">
+    <div
+      className={`w-16 h-16 rounded-[20px] ${bg} ${border} flex items-center justify-center flex-shrink-0`}
+    >
+      <div className={color}>{icon}</div>
+    </div>
+
+    <div>
+      <h3 className="text-lg font-extrabold text-[#0F172A] leading-tight">
+        {title}
+      </h3>
+      <p className="mt-1 text-sm font-medium text-slate-500 leading-snug">
+        {desc}
+      </p>
+    </div>
+  </div>
+);
+
 const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
   return (
-    <div className="w-full flex-1 flex flex-col justify-center animate-in fade-in duration-700">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full max-w-full mx-auto py-8 lg:py-0">
-        {/* Left Column: CTA */}
-        <div className="flex flex-col items-center lg:items-start space-y-6 text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-100/50 rounded-full border border-orange-200 text-[#EA580C] text-xs font-bold">
-            <Zap size={14} fill="currentColor" />
-            {t.integrated}
-          </div>
-          
-          <div className="space-y-4">
-            <h2 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-[#0F172A] leading-[1.1] tracking-tight">
-              {t.heroTitle1}<br />
-              <span className="text-[#F97316]">{t.heroTitle2}</span>
-            </h2>
-            <p className="text-base sm:text-lg text-slate-500 max-w-md leading-relaxed mx-auto lg:mx-0">
-              {t.heroDesc}
+    <div className="w-full bg-white overflow-x-hidden">
+      {/* HERO */}
+      <section className="w-full py-14 lg:py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-0 items-center">
+          {/* LEFT */}
+          <div className="flex flex-col items-start space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-full border border-orange-200 text-[#EA580C] text-xs font-bold">
+              <Zap size={14} fill="currentColor" />
+              YOLO Vision
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-5xl sm:text-6xl font-extrabold text-[#0F172A] leading-tight tracking-tight">
+                {t?.heroTitle1 ?? 'Belanja Cepat,'}
+              </h2>
+              <h2 className="text-5xl sm:text-6xl font-extrabold text-[#F97316] leading-tight tracking-tight">
+                {t?.heroTitle2 ?? 'Tanpa Antre.'}
+              </h2>
+            </div>
+
+            <p className="text-base text-slate-600 max-w-md leading-relaxed font-medium">
+              {t?.heroDesc ??
+                'Gunakan teknologi Computer Vision untuk mendeteksi barang Anda secara instan. Cukup foto, bayar, dan selesai!'}
             </p>
+
+            <button
+              onClick={onStart}
+              className="group inline-flex items-center gap-3 bg-[#F97316] hover:bg-[#EA580C] text-white px-8 py-4 rounded-full text-base font-bold transition-all shadow-lg shadow-orange-300/50 active:scale-95"
+            >
+              {t?.startBtn ?? 'Mulai Belanja'}
+              <Camera size={20} className="group-hover:rotate-12 transition-transform" />
+            </button>
           </div>
 
-          <button 
-            onClick={onStart}
-            className="group flex items-center gap-4 bg-[#F97316] hover:bg-[#EA580C] text-white px-8 lg:px-10 py-4 lg:py-5 rounded-full text-lg lg:text-xl font-bold transition-all vision-shadow active:scale-95"
-          >
-            {t.startBtn}
-            <Camera className="group-hover:rotate-12 transition-transform" />
-          </button>
-        </div>
-
-        {/* Right Column: Grid of Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 relative">
-          {/* Background Decorative Glow */}
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-orange-100 rounded-full blur-[100px] opacity-30 pointer-events-none" />
-          
-          {/* Feature Card 1: Scan Produk */}
-          <div className="bg-white p-8 rounded-[40px] vision-shadow border border-slate-50 flex flex-col items-center text-center group hover:-translate-y-1 transition-all duration-300">
-            <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center mb-5 text-[#F97316] group-hover:scale-110 transition-transform">
-              <ShoppingBasket size={28} />
-            </div>
-            <h4 className="text-base font-black text-slate-900 mb-1">Scan Produk</h4>
-            <p className="text-xs text-slate-400 font-medium">Camera & Barcode</p>
-          </div>
-
-          {/* Feature Card 2: Instant Checkout */}
-          <div className="bg-white p-8 rounded-[40px] vision-shadow border border-slate-50 flex flex-col items-center text-center group hover:-translate-y-1 transition-all duration-300">
-            <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center mb-5 text-[#F97316] group-hover:scale-110 transition-transform">
-              <Clock size={28} />
-            </div>
-            <h4 className="text-base font-black text-slate-900 mb-1">Instant Checkout</h4>
-            <p className="text-xs text-slate-400 font-medium">Proses Cepat</p>
-          </div>
-
-          {/* Feature Card 3: Membership QR (Integrated - Spans 2 columns for better balance) */}
-          <div className="col-span-1 sm:col-span-2 glass-card rounded-[32px] sm:rounded-[40px] p-6 sm:p-8 vision-shadow border-2 border-white relative overflow-hidden group flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-0">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700 hidden sm:block">
-              <Sparkles size={100} className="text-[#F97316]" />
-            </div>
-            
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-left max-w-[200px]">
-              <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center mb-3 text-[#F97316]">
-                <UserPlus size={20} />
-              </div>
-              <h4 className="text-lg font-black text-slate-900 mb-1">{t.registerMember}</h4>
-              <p className="text-xs text-slate-500 mb-3">Nikmati berbagai macam diskon setiap belanja.</p>
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 rounded-full border border-green-100">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-[9px] font-bold text-green-700 uppercase tracking-wider">{t.joinNow}</span>
-              </div>
-            </div>
-            
-            <div className="bg-white p-3 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 transition-transform hover:scale-110 duration-300 relative z-10">
-              <img 
-                src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=NGOLAB_MEMBER" 
-                alt="QR" 
-                className="w-20 h-20 sm:w-24 sm:h-24 grayscale-[0.2]"
+          {/* RIGHT */}
+          <div className="relative flex items-center justify-center h-[470px] lg:h-[540px]">
+            <div className="relative z-10 w-[380px] h-[380px] lg:w-[500px] lg:h-[500px]">
+              <img
+                src="/keranjangg.png"
+                alt="Shopping Cart"
+                className="w-full h-full object-contain"
               />
-              <div className="mt-2 flex items-center justify-center gap-1.5">
-                <QrCode size={10} className="text-slate-300" />
-                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">{t.scanMe}</span>
+            </div>
+
+            <div className="absolute top-8 right-8 lg:right-10 animate-float-slow z-20">
+              <ProductCard
+                name="Chips"
+                sub="Keripik Original"
+                price="Rp 12.000"
+                img="/chips.png"
+              />
+            </div>
+
+            <div className="absolute top-[52%] right-2 lg:right-4 -translate-y-1/2 animate-float-fast z-20 hidden sm:block">
+              <ProductCard
+                name="Milk"
+                sub="Susu UHT 1L"
+                price="Rp 18.000"
+                img="/milk.png"
+              />
+            </div>
+
+            <div className="absolute top-[34%] left-2 lg:left-4 animate-float-medium z-20">
+              <ProductCard
+                name="Coffee"
+                sub="Kopi Latte"
+                price="Rp 15.000"
+                img="/coffe.png"
+              />
+            </div>
+
+            <div className="absolute bottom-10 left-8 lg:left-10 animate-float-slow z-20">
+              <ProductCard
+                name="Water"
+                sub="Air Mineral 600ml"
+                price="Rp 5.000"
+                img="/water.png"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURE BAR */}
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-[26px] border border-purple-100 px-3 md:px-6 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+              <FeatureItem
+                icon={<Target size={34} strokeWidth={3} />}
+                title="Deteksi Akurat"
+                desc="Menggunakan YOLOv8 real-time"
+                color="text-orange-600"
+                bg="bg-orange-50"
+                border="border border-orange-100"
+              />
+
+              <FeatureItem
+                icon={<Zap size={34} strokeWidth={3} />}
+                title="Cepat"
+                desc="Proses hanya dalam hitungan menit"
+                color="text-orange-600"
+                bg="bg-orange-50"
+                border="border border-orange-100"
+              />
+
+              <FeatureItem
+                icon={<ShieldCheck size={36} strokeWidth={3} />}
+                title="Aman & Privat"
+                desc="Data 100% privat dan aman"
+                color="text-green-500"
+                bg="bg-green-50"
+                border="border border-green-100"
+              />
+
+              <FeatureItem
+                icon={<Users size={36} strokeWidth={3} />}
+                title="0 Antrian"
+                desc="Belanja tanpa antre, lebih efisien"
+                color="text-purple-500"
+                bg="bg-purple-50"
+                border="border border-purple-100"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* MEMBERSHIP BANNER */}
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-8 pb-20">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative overflow-hidden rounded-[30px] bg-gradient-to-r from-[#07155A] via-[#1B1768] to-[#8B2CEB] px-8 sm:px-10 lg:px-14 py-10 shadow-2xl">
+            <div className="absolute -right-24 -bottom-24 w-96 h-96 bg-purple-500/35 rounded-full blur-3xl" />
+            <div className="absolute right-10 -bottom-20 w-80 h-72 bg-fuchsia-500/25 rounded-full blur-3xl" />
+            <div className="absolute left-[40%] bottom-[-80px] w-[420px] h-[220px] bg-purple-600/30 rounded-full blur-2xl" />
+
+            <div className="absolute left-[48%] top-[36%] text-yellow-300 text-3xl">✦</div>
+            <div className="absolute left-[58%] bottom-[22%] text-pink-400 text-4xl">✦</div>
+            <div className="absolute right-[25%] top-[14%] text-yellow-300 text-4xl">✦</div>
+            <div className="absolute right-[4%] top-[22%] text-yellow-300 text-4xl">✦</div>
+
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-10">
+              <div className="max-w-xl text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 text-white text-sm font-bold mb-5">
+                  <Users size={16} />
+                  Membership Ngolab
+                </div>
+
+                <h2 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+                  Gabung Jadi Member
+                </h2>
+
+                <p className="mt-3 text-white/85 text-base lg:text-lg leading-relaxed max-w-lg">
+                  Nikmati berbagai macam diskon, reward point, voucher eksklusif,
+                  dan promo spesial setiap transaksi.
+                </p>
+
+                <button
+                  onClick={onStart}
+                  className="mt-7 bg-green-500 hover:bg-green-600 text-white font-extrabold px-8 py-4 rounded-full inline-flex items-center gap-3 transition-all shadow-lg shadow-green-500/30 active:scale-95"
+                >
+                  Join Now
+                  <ArrowRight size={20} />
+                </button>
+              </div>
+
+              <div className="relative w-full lg:w-[500px] h-[220px] hidden sm:block">
+                <div className="absolute left-5 top-4 w-[80px] h-[80px] rounded-[24px] bg-gradient-to-b from-[#B450FF] to-[#8127F3] flex items-center justify-center shadow-2xl">
+                  <Percent size={45} className="text-white" />
+                </div>
+
+                <div className="absolute left-[130px] top-[75px] w-[105px] h-[105px] rounded-[24px] bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center rotate-[12deg] shadow-2xl">
+                  <Gift size={58} className="text-yellow-300" />
+                </div>
+
+                <div className="absolute right-4 top-0 bg-white rounded-[24px] w-[150px] h-[190px] flex flex-col items-center justify-center shadow-2xl">
+                  <div className="w-[105px] h-[105px] flex items-center justify-center">
+                    <QrCode size={95} className="text-black" />
+                  </div>
+
+                  <p className="mt-2 text-[#2B1A87] text-lg font-extrabold">
+                    Scan Me
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
