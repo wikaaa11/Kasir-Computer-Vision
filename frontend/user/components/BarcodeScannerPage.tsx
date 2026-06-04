@@ -1,8 +1,19 @@
-
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Barcode, ShoppingCart, Package, RefreshCw, Loader2, CreditCard } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  ArrowLeft,
+  Barcode,
+  ShoppingCart,
+  Package,
+  Loader2,
+  CreditCard,
+  Scan,
+} from 'lucide-react';
 import { CartItem } from '../types';
-import { getCvProductByBarcode, getCvProducts, toCatalogProduct } from '../src/cvApiService';
+import {
+  getCvProductByBarcode,
+  getCvProducts,
+  toCatalogProduct,
+} from '../src/cvApiService';
 
 interface BarcodeScannerPageProps {
   onBack: () => void;
@@ -11,42 +22,35 @@ interface BarcodeScannerPageProps {
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
 }
 
-const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({ 
-  onBack, 
-  onFinish, 
-  cart, 
-  setCart
+const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
+  onBack,
+  onFinish,
+  cart,
+  setCart,
 }) => {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [productsList, setProductsList] = useState<any[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
-  const [statusMsg, setStatusMsg] = useState<string>("Inisialisasi...");
+  const [statusMsg, setStatusMsg] = useState<string>('Inisialisasi...');
   const [barcodeInput, setBarcodeInput] = useState<string>('');
 
-  const getPrimaryCatalogProduct = () => {
-    const preferred = productsList.find((product) => {
-      const productName = String(product.nama || product.name || '').toLowerCase();
-      return productName.includes('indomie');
-    });
-
-    return preferred || productsList[0] || null;
-  };
-
-  const primaryCatalogProduct = getPrimaryCatalogProduct();
-  const primaryCatalogLabel = String(primaryCatalogProduct?.nama || primaryCatalogProduct?.name || 'Produk DB');
+  const barcodeInputRef = useRef<HTMLInputElement>(null);
+  const cartPanelRef = useRef<HTMLDivElement>(null);
 
   const fetchProducts = async () => {
     setIsLoadingProducts(true);
-    setStatusMsg("Sync Katalog...");
+    setStatusMsg('Sync Katalog...');
+
     try {
       const products = await getCvProducts();
       const normalized = products.map(toCatalogProduct);
+
       setProductsList(normalized);
-      setStatusMsg(normalized.length > 0 ? "Siap Scan" : "Katalog Kosong");
+      setStatusMsg(normalized.length > 0 ? 'Siap Scan' : 'Katalog Kosong');
     } catch (err) {
-      console.error("Fetch failed", err);
+      console.error('Fetch failed', err);
       setProductsList([]);
-      setStatusMsg("Gagal memuat katalog backend");
+      setStatusMsg('Gagal memuat katalog backend');
     } finally {
       setIsLoadingProducts(false);
     }
@@ -56,108 +60,153 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    barcodeInputRef.current?.focus();
+  }, []);
+
   const addProductToCart = (product: any) => {
-    setCart(prev => {
-      const existingIdx = prev.findIndex(item => item.id === product.id);
+    setCart((prev) => {
+      const existingIdx = prev.findIndex((item) => item.id === product.id);
+
       if (existingIdx > -1) {
         const updated = [...prev];
         updated[existingIdx].quantity += 1;
         return updated;
       }
-      return [...prev, {
-        id: product.id,
-        name: product.nama,
-        price: product.harga,
-        quantity: 1,
-        points: product.poin,
-        imageUrl: product.foto
-      }];
+
+      return [
+        ...prev,
+        {
+          id: product.id,
+          name: product.nama,
+          price: product.harga,
+          quantity: 1,
+          points: product.poin,
+          imageUrl: product.foto,
+        },
+      ];
     });
   };
 
   const updateQuantity = (idx: number, quantity: number) => {
-    setCart(prev => {
+    setCart((prev) => {
       const updated = [...prev];
+
       if (quantity <= 0) {
         return updated.filter((_, i) => i !== idx);
       }
+
       updated[idx].quantity = quantity;
       return updated;
     });
   };
 
-  const handleScanByBarcode = async () => {
+  const handleScanByBarcode = async (barcodeValue?: string) => {
     if (isProcessing) return;
 
-    const cleanBarcode = barcodeInput.trim();
-    if (!cleanBarcode) {
-      alert('Masukkan barcode dulu sebelum scan.');
-      return;
-    }
-    
+    const cleanBarcode = String(barcodeValue || barcodeInput).trim();
+
+    if (!cleanBarcode) return;
+
     setIsProcessing(true);
-    setStatusMsg("Memindai...");
+    setStatusMsg('Memindai...');
 
     try {
       const foundProduct = await getCvProductByBarcode(cleanBarcode);
       const normalizedProduct = toCatalogProduct(foundProduct);
+
       addProductToCart(normalizedProduct);
-      setStatusMsg("Berhasil!");
+
+      setStatusMsg('Berhasil masuk keranjang!');
       setBarcodeInput('');
-      setTimeout(() => setStatusMsg("Siap Scan"), 1500);
+
+      setTimeout(() => {
+        cartPanelRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+
+        barcodeInputRef.current?.focus();
+        setStatusMsg('Siap Scan');
+      }, 300);
     } catch (error) {
       console.error('Barcode scan error:', error);
-      const friendlyMessage = error instanceof Error
-        ? error.message
-        : 'Barcode tidak ditemukan. Pastikan barcode benar atau gunakan mode AI.';
-      setStatusMsg("Barcode Tidak Ditemukan");
+
+      const friendlyMessage =
+        error instanceof Error
+          ? error.message
+          : 'Barcode tidak ditemukan. Pastikan barcode benar atau gunakan mode AI.';
+
+      setStatusMsg('Barcode Tidak Ditemukan');
       alert(friendlyMessage);
+
+      setBarcodeInput('');
+
+      setTimeout(() => {
+        barcodeInputRef.current?.focus();
+      }, 300);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleSimulateScan = () => {
-    const sourceList = productsList;
-    if (sourceList.length === 0 || isProcessing) return;
-    const randomProduct = sourceList[Math.floor(Math.random() * sourceList.length)];
-    addProductToCart(randomProduct);
-    setStatusMsg("Berhasil!");
-    setTimeout(() => setStatusMsg("Siap Scan"), 1200);
-  };
-
-  const handleAddDbProduct = () => {
-    if (isProcessing) return;
-    const product = getPrimaryCatalogProduct();
-    if (!product) {
-      setStatusMsg("Belum ada produk di database");
-      return;
-    }
-    addProductToCart(product);
-    setStatusMsg(`${primaryCatalogLabel} ditambahkan`);
-    setTimeout(() => setStatusMsg("Siap Scan"), 1200);
-  };
-
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
-    <div className="fixed inset-0 bg-[#F8FAFC] flex flex-col lg:flex-row overflow-hidden font-['Plus_Jakarta_Sans']">
-      {/* Main Scanner Area */}
+    <div
+      className="fixed inset-0 bg-[#F8FAFC] flex flex-col lg:flex-row overflow-hidden font-['Plus_Jakarta_Sans']"
+      onClick={() => barcodeInputRef.current?.focus()}
+    >
+      <input
+        ref={barcodeInputRef}
+        value={barcodeInput}
+        onChange={(e) => setBarcodeInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleScanByBarcode(e.currentTarget.value);
+          }
+        }}
+        autoFocus
+        className="absolute left-[-9999px] top-[-9999px] opacity-0 pointer-events-none"
+      />
+
       <div className="flex-1 flex flex-col bg-slate-50 relative overflow-y-auto lg:overflow-hidden">
         <div className="p-4 md:p-6 flex justify-between items-center z-10">
-          <button onClick={onBack} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white/80 backdrop-blur-md rounded-xl text-slate-700 font-bold shadow-sm border border-white text-xs md:text-sm">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white/80 backdrop-blur-md rounded-xl text-slate-700 font-bold shadow-sm border border-white text-xs md:text-sm"
+          >
             <ArrowLeft size={16} /> Kembali
           </button>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center py-10 lg:py-0">
           <div className="relative mb-8 md:mb-12">
-            <div className={`w-56 h-56 md:w-72 md:h-72 bg-white rounded-[40px] md:rounded-[56px] vision-shadow flex flex-col items-center justify-center border-4 ${isProcessing ? 'border-[#F97316]' : 'border-transparent'} transition-all duration-300 relative overflow-hidden`}>
+            <div
+              className={`w-56 h-56 md:w-72 md:h-72 bg-white rounded-[40px] md:rounded-[56px] vision-shadow flex flex-col items-center justify-center border-4 ${
+                isProcessing ? 'border-[#F97316]' : 'border-transparent'
+              } transition-all duration-300 relative overflow-hidden`}
+            >
               <div className="scan-line !bg-[#F97316]/20" />
-              <Barcode size={80} className={isProcessing ? 'text-[#F97316] animate-pulse' : 'text-slate-300 md:hidden'} />
-              <Barcode size={120} className={isProcessing ? 'text-[#F97316] animate-pulse' : 'text-slate-300 hidden md:block'} />
-              <div className="mt-4 md:mt-6 text-[8px] md:text-[10px] font-black text-slate-400 tracking-[0.4em] uppercase">{statusMsg}</div>
+
+              {isProcessing ? (
+                <Loader2 size={96} className="text-[#F97316] animate-spin" />
+              ) : (
+                <>
+                  <Barcode size={80} className="text-slate-300 md:hidden" />
+                  <Barcode size={120} className="text-slate-300 hidden md:block" />
+                </>
+              )}
+
+              <div className="mt-4 md:mt-6 text-[8px] md:text-[10px] font-black text-slate-400 tracking-[0.4em] uppercase">
+                {statusMsg}
+              </div>
             </div>
+
             {cart.length > 0 && (
               <div className="absolute -top-3 -right-3 md:-top-4 md:-right-4 w-10 h-10 md:w-14 md:h-14 bg-[#F97316] rounded-full flex items-center justify-center text-white font-black text-base md:text-xl shadow-2xl border-4 border-white animate-in zoom-in duration-300">
                 {cart.reduce((sum, i) => sum + i.quantity, 0)}
@@ -165,56 +214,36 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
             )}
           </div>
 
-          <h2 className="text-2xl md:text-4xl font-black text-slate-900 mb-2 md:mb-3 tracking-tight">Scan Barcode Anda</h2>
-          <p className="text-sm md:text-base text-slate-400 mb-8 md:mb-12 max-w-xs leading-relaxed">Dekatkan barcode produk ke sensor pemindai di depan Anda.</p>
+          <h2 className="text-2xl md:text-4xl font-black text-slate-900 mb-2 md:mb-3 tracking-tight">
+            Scan Barcode Anda
+          </h2>
 
-          <div className="flex flex-col gap-4 w-full max-w-xs">
-            <input
-              value={barcodeInput}
-              onChange={(e) => setBarcodeInput(e.target.value)}
-              placeholder="Masukkan barcode produk"
-              className="w-full py-3 px-4 bg-white border-2 border-slate-200 rounded-2xl font-bold text-slate-600 focus:outline-none focus:border-[#F97316]"
-            />
-            <button
-              onClick={handleAddDbProduct}
-              disabled={isLoadingProducts || isProcessing}
-              className="group py-4 md:py-5 bg-slate-900 border-2 border-slate-900 rounded-[24px] md:rounded-[32px] font-black text-sm md:text-base text-white hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3 shadow-sm disabled:opacity-50"
-            >
-              <Package size={20} className="group-hover:scale-110 transition-transform" />
-              Tambah {primaryCatalogLabel} ke Keranjang
-            </button>
-            <button 
-              onClick={handleScanByBarcode}
-              disabled={isLoadingProducts || isProcessing}
-              className="group py-4 md:py-5 bg-[#F97316] border-2 border-[#F97316] rounded-[24px] md:rounded-[32px] font-black text-sm md:text-base text-white hover:bg-[#EA580C] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-sm disabled:opacity-50"
-            >
-              {isProcessing ? <Loader2 className="animate-spin" size={20} /> : <Barcode size={20} className="group-hover:scale-110 transition-transform" />}
-              Scan by Barcode
-            </button>
-            <button 
-              onClick={handleSimulateScan}
-              disabled={isLoadingProducts || isProcessing}
-              className="group py-4 md:py-5 bg-white border-2 border-slate-200 rounded-[24px] md:rounded-[32px] font-black text-sm md:text-base text-slate-600 hover:border-[#F97316] hover:text-[#F97316] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-sm disabled:opacity-50"
-            >
-              {isProcessing ? <Loader2 className="animate-spin" size={20} /> : <Barcode size={20} className="group-hover:scale-110 transition-transform" />}
-              Simulasi Scan Barang
-            </button>
-          </div>
+          <p className="text-sm md:text-base text-slate-400 max-w-xs leading-relaxed">
+            Arahkan scanner ke barcode produk. Produk akan otomatis masuk ke keranjang.
+          </p>
         </div>
       </div>
 
-      {/* Cart Sidebar */}
-      <div className="w-full lg:w-[480px] bg-white flex flex-col z-30 shadow-[-40px_0_80px_rgba(0,0,0,0.05)] border-t lg:border-t-0 lg:border-l border-slate-100 h-[55vh] lg:h-full">
+      <div
+        ref={cartPanelRef}
+        className="w-full lg:w-[480px] bg-white flex flex-col z-30 shadow-[-40px_0_80px_rgba(0,0,0,0.05)] border-t lg:border-t-0 lg:border-l border-slate-100 h-[55vh] lg:h-full"
+      >
         <div className="p-4 md:p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
           <div className="flex items-center gap-3 md:gap-4">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-[#F97316] rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
               <ShoppingCart size={24} />
             </div>
+
             <div>
-               <h2 className="text-slate-900 font-black text-lg md:text-2xl tracking-tight">Keranjang</h2>
-               <p className="text-slate-400 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">Scanner Terhubung</p>
+              <h2 className="text-slate-900 font-black text-lg md:text-2xl tracking-tight">
+                Keranjang
+              </h2>
+              <p className="text-slate-400 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">
+                Scanner Terhubung
+              </p>
             </div>
           </div>
+
           <div className="px-3 md:px-5 py-1.5 md:py-2 bg-slate-900 rounded-full text-white font-black text-[9px] md:text-[11px] uppercase tracking-widest">
             {cart.length} ITEMS
           </div>
@@ -226,33 +255,53 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
               <div className="w-20 h-20 md:w-32 md:h-32 bg-slate-50 rounded-[32px] md:rounded-[48px] flex items-center justify-center border-2 border-dashed border-slate-200">
                 <Package size={48} className="text-slate-200" />
               </div>
-              <p className="text-slate-900 font-black text-sm md:text-base uppercase tracking-[0.2em]">Keranjang Kosong</p>
+              <p className="text-slate-900 font-black text-sm md:text-base uppercase tracking-[0.2em]">
+                Keranjang Kosong
+              </p>
             </div>
           ) : (
             cart.map((item, idx) => (
-              <div key={`${item.id}-${idx}`} className="group relative bg-white border border-slate-100 p-4 md:p-6 rounded-[24px] md:rounded-[36px] flex items-center gap-4 md:gap-6 transition-all hover:shadow-2xl">
+              <div
+                key={`${item.id}-${idx}`}
+                className="group relative bg-white border border-slate-100 p-4 md:p-6 rounded-[24px] md:rounded-[36px] flex items-center gap-4 md:gap-6 transition-all hover:shadow-2xl"
+              >
                 <div className="w-14 h-14 md:w-20 md:h-20 bg-slate-50 rounded-xl md:rounded-[24px] overflow-hidden flex items-center justify-center border border-slate-100 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                   {item.imageUrl ? (
-                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = "")} />
-                   ) : (
-                     <Scan size={24} className="text-slate-200" />
-                   )}
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <Scan size={24} className="text-slate-200" />
+                  )}
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-slate-900 font-black text-sm md:text-base leading-tight truncate">{item.name}</h4>
-                  <p className="text-[#F97316] font-black text-[10px] md:text-sm mt-1">Rp {item.price.toLocaleString('id-ID')}</p>
+                  <h4 className="text-slate-900 font-black text-sm md:text-base leading-tight truncate">
+                    {item.name}
+                  </h4>
+                  <p className="text-[#F97316] font-black text-[10px] md:text-sm mt-1">
+                    Rp {item.price.toLocaleString('id-ID')}
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-3 bg-slate-50 border border-slate-100 px-2.5 md:px-3 py-1.5 rounded-xl md:rounded-2xl shrink-0">
-                  <button 
+                  <button
                     onClick={() => updateQuantity(idx, item.quantity - 1)}
                     className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-sm md:text-base transition-all"
                   >
                     −
                   </button>
-                  <span className="font-black text-slate-900 text-sm md:text-base min-w-[20px] text-center">{item.quantity}</span>
-                  <button 
+
+                  <span className="font-black text-slate-900 text-sm md:text-base min-w-[20px] text-center">
+                    {item.quantity}
+                  </span>
+
+                  <button
                     onClick={() => updateQuantity(idx, item.quantity + 1)}
                     className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-[#F97316] hover:bg-[#EA580C] text-white font-black text-sm md:text-base transition-all"
                   >
@@ -266,17 +315,26 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
 
         <div className="p-6 pb-10 md:p-10 bg-slate-900 text-white rounded-t-[32px] md:rounded-t-[50px] shadow-2xl">
           <div className="flex justify-between items-end mb-6 md:mb-10">
-             <div className="space-y-0.5 md:space-y-1">
-                <p className="text-white/40 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em]">Total Bayar</p>
-                <p className="text-white font-black text-2xl md:text-4xl tracking-tighter">Rp {subtotal.toLocaleString('id-ID')}</p>
-             </div>
-             <div className="text-right">
-                <p className="text-blue-300 font-black text-[8px] md:text-[10px] uppercase tracking-widest mb-0.5 md:mb-1">Cashback</p>
-                <p className="text-white font-black text-base md:text-xl">+0 pts</p>
-             </div>
+            <div className="space-y-0.5 md:space-y-1">
+              <p className="text-white/40 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em]">
+                Total Bayar
+              </p>
+              <p className="text-white font-black text-2xl md:text-4xl tracking-tighter">
+                Rp {subtotal.toLocaleString('id-ID')}
+              </p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-blue-300 font-black text-[8px] md:text-[10px] uppercase tracking-widest mb-0.5 md:mb-1">
+                Cashback
+              </p>
+              <p className="text-white font-black text-base md:text-xl">
+                +0 pts
+              </p>
+            </div>
           </div>
 
-          <button 
+          <button
             disabled={cart.length === 0}
             onClick={onFinish}
             className="w-full py-4 md:py-6 bg-[#F97316] hover:bg-[#EA580C] disabled:bg-white/10 disabled:text-white/20 text-white rounded-[24px] md:rounded-[32px] font-black text-[10px] md:text-sm uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 md:gap-4 active:scale-[0.98]"

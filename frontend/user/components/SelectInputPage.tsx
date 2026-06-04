@@ -42,7 +42,7 @@ const SelectInputPage: React.FC<SelectInputPageProps> = ({
     <div className="min-h-screen w-full bg-white px-4 py-6">
       <div className="mx-auto w-full max-w-7xl px-4">
         {/* HEADER */}
-        
+
 
         {/* BACK */}
         <button
@@ -74,20 +74,20 @@ const SelectInputPage: React.FC<SelectInputPageProps> = ({
           {/* CAMERA */}
           <button
             onClick={onSelectAI}
-            className="group relative overflow-hidden rounded-[28px] border-2 border-orange-200 bg-gradient-to-br from-white via-orange-50/40 to-white p-8 text-left transition-all hover:-translate-y-1 hover:border-orange-400 hover:shadow-[0_18px_45px_rgba(249,115,22,0.18)]"
+            className="group relative overflow-hidden rounded-[28px] border-2 border-orange-200 bg-white p-8 text-left shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400 hover:shadow-[0_18px_45px_rgba(249,115,22,0.18)]"
           >
             <div className="absolute left-7 top-7 inline-flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-bold text-orange-500">
               <Sparkles size={15} />
               Rekomendasi
             </div>
 
-            <div className="mt-14 flex h-56 items-center justify-center">
-              <div className="relative">
-              <img
-                src="/camera.png"
-                alt="Scan Camera"
-              className="h-60 w-80 object-contain"
-              />
+            <div className="mt-14 flex h-56 items-center justify-center bg-white">
+              <div className="relative flex items-center justify-center bg-white">
+                <img
+                  src="/camera.png"
+                  alt="Scan Camera"
+                  className="h-60 w-80 object-contain bg-white [filter:brightness(1.01)_contrast(1.02)]"
+                />
               </div>
             </div>
 
@@ -116,14 +116,16 @@ const SelectInputPage: React.FC<SelectInputPageProps> = ({
           {/* BARCODE */}
           <button
             onClick={onSelectBarcode}
-            className="group relative overflow-hidden rounded-[28px] border-2 border-blue-200 bg-gradient-to-br from-white via-blue-50/40 to-white p-8 text-left transition-all hover:-translate-y-1 hover:border-blue-400 hover:shadow-[0_18px_45px_rgba(37,99,235,0.18)]"
+            className="group relative overflow-hidden rounded-[28px] border-2 border-blue-200 bg-white p-8 text-left shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-[0_18px_45px_rgba(37,99,235,0.18)]"
           >
-            <div className="mt-8 flex h-56 items-center justify-center">
-              <img
-                src="/barcode.png"
-                alt="Scan Barcode"
-                className="h-52 w-72 object-contain"
-              />
+            <div className="mt-14 flex h-56 items-center justify-center bg-white">
+              <div className="relative flex items-center justify-center bg-white">
+                <img
+                  src="/barcode.png"
+                  alt="Scan Barcode"
+                  className="h-60 w-80 object-contain bg-white [filter:brightness(1.01)_contrast(1.02)]"
+                />
+              </div>
             </div>
 
             <h3 className="mt-8 text-2xl font-extrabold text-slate-950">
@@ -158,9 +160,7 @@ const SelectInputPage: React.FC<SelectInputPageProps> = ({
               YOLO (You Only Look Once)
             </h4>
             <p className="mt-1 text-sm font-medium leading-relaxed text-slate-500">
-              Teknologi AI canggih yang dapat mendeteksi banyak objek dalam satu
-              gambar secara real-time. Lebih cepat, lebih pintar, dan minim
-              kesalahan.
+              Teknologi AI canggih untuk mendeteksi satu produk dari satu foto dalam sekali proses. Cepat, praktis, dan minim kesalahan input manual.
             </p>
           </div>
         </div>

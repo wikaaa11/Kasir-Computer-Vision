@@ -134,11 +134,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
 
           {/* RIGHT */}
           <div className="relative flex items-center justify-center h-[470px] lg:h-[540px]">
-            <div className="relative z-10 w-[380px] h-[380px] lg:w-[500px] lg:h-[500px]">
+            <div className="relative z-10 flex items-center justify-center w-[380px] h-[380px] lg:w-[500px] lg:h-[500px] bg-white">
               <img
                 src="/keranjangg.png"
                 alt="Shopping Cart"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain bg-white [filter:brightness(1.02)_contrast(1.02)]"
               />
             </div>
 
@@ -151,7 +151,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
               />
             </div>
 
-            <div className="absolute top-[52%] right-2 lg:right-4 -translate-y-1/2 animate-float-fast z-20 hidden sm:block">
+            <div className="absolute top-[240px] lg:top-[270px] right-2 lg:right-4 animate-float-slow z-20 hidden sm:block">
               <ProductCard
                 name="Milk"
                 sub="Susu UHT 1L"

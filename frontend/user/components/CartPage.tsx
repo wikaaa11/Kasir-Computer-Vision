@@ -1,6 +1,20 @@
-
 import React from 'react';
-import { ArrowRight, Ticket, Sparkles, Coins } from 'lucide-react';
+import {
+  ArrowRight,
+  Ticket,
+  Sparkles,
+  ShoppingBag,
+  Trash2,
+  Minus,
+  Plus,
+  ReceiptText,
+  ShieldCheck,
+  Star,
+  BadgePercent,
+  Gift,
+  QrCode,
+  Database,
+} from 'lucide-react';
 import { CartItem, Voucher } from '../types';
 
 interface CartPageProps {
@@ -18,145 +32,377 @@ interface CartPageProps {
   t: any;
 }
 
-const CartPage: React.FC<CartPageProps> = ({ 
-  cart, isMember, selectedVoucher, discountAmount, pointsUsed,
-  onUpdateQuantity, onRemoveItem, onReset, onGoToMembership, onGoToVouchers, onConfirm, t
+const formatRupiah = (value: number) =>
+  `Rp ${value.toLocaleString('id-ID')}`;
+
+const CartPage: React.FC<CartPageProps> = ({
+  cart,
+  isMember,
+  selectedVoucher,
+  discountAmount,
+  pointsUsed,
+  onUpdateQuantity,
+  onRemoveItem,
+  onReset,
+  onGoToMembership,
+  onGoToVouchers,
+  onConfirm,
 }) => {
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
   const total = Math.max(0, subtotal - discountAmount - pointsUsed);
-
-  const getMembershipCardContent = () => {
-    if (!isMember) {
-      return {
-        bg: 'bg-slate-900 text-white shadow-xl shadow-slate-200',
-        iconBg: 'bg-slate-800 text-[#F97316]',
-        icon: <Ticket size={24} />,
-        title: t.membershipCard,
-        desc: t.hasMembershipDesc,
-        button: (
-          <button 
-            onClick={onGoToMembership}
-            className="px-6 py-3 bg-[#F97316] hover:bg-[#EA580C] rounded-2xl font-black text-xs uppercase tracking-widest transition-all shrink-0"
-          >
-            {t.scanMember}
-          </button>
-        )
-      };
-    }
-
-    return {
-      bg: 'bg-[#F97316] text-white shadow-xl shadow-orange-200',
-      iconBg: 'bg-white/20',
-      icon: <Sparkles size={24} />,
-      title: t.activeMemberPortal,
-      desc: t.activeMemberDesc,
-      button: (
-        <button 
-          onClick={onGoToVouchers}
-          className="px-6 py-3 bg-white text-orange-600 hover:bg-orange-50 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shrink-0"
-        >
-          {t.menuReward}
-        </button>
-      )
-    };
-  };
-
-  const card = getMembershipCardContent();
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const rewardPoints = Math.floor(total / 1000);
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-center items-center py-6">
-      <div className="w-full flex flex-col gap-6 md:gap-8 max-w-[1440px] animate-in fade-in duration-500">
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-8">
-        <div className="lg:col-span-3 space-y-4 md:space-y-6">
-          <div className="glass-card rounded-[32px] md:rounded-[40px] p-6 md:p-8 vision-shadow">
-            <div className="flex justify-between items-center mb-6 md:mb-8">
-              <h2 className="text-xl md:text-2xl font-black text-slate-800">{t.title}</h2>
-              <span className="px-3 md:px-4 py-1 md:py-1.5 bg-slate-100 text-slate-500 text-[8px] md:text-[10px] font-black rounded-full uppercase tracking-widest">
-                {cart.length} {t.items}
-              </span>
-            </div>
+    <div className="w-full min-h-[calc(100vh-76px)] bg-white text-slate-900 flex flex-col">
+      <main className="flex-1 w-full max-w-[1100px] mx-auto px-4 py-6 flex flex-col justify-center">
+        <section className="mb-4 flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-white border border-orange-100 shadow-sm flex items-center justify-center text-orange-500">
+            <ShoppingBag size={22} />
+          </div>
 
-            <div className="space-y-4 max-h-[300px] md:max-h-[420px] overflow-y-auto pr-2">
-              {cart.map((item, idx) => (
-                <div key={`${item.id}-${idx}`} className="bg-white p-4 md:p-6 rounded-[20px] md:rounded-[24px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-50 shadow-sm">
-                  <div className="flex items-center gap-3 md:gap-4">
-                    {item.imageUrl && (
-                      <img src={item.imageUrl} alt={item.name} className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl object-cover" />
-                    )}
-                    <div>
-                      <span className="block text-slate-800 font-bold text-base md:text-lg">{item.name}</span>
-                      <span className="text-[#F97316] font-black text-xs md:text-sm">
-                        Rp {item.price.toLocaleString('id-ID')}
+          <div>
+            <h1 className="text-2xl font-black text-slate-900">Checkout</h1>
+            <p className="text-sm text-slate-500 font-medium">
+              Periksa kembali pesanan Anda sebelum melanjutkan pembayaran.
+            </p>
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_350px] gap-4">
+          <div className="space-y-4">
+            <section className="bg-white rounded-[22px] border border-slate-100 shadow-sm p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-black">Keranjang Belanja</h2>
+                <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] font-black">
+                  {totalItems} ITEM
+                </span>
+              </div>
+
+              {cart.length === 0 ? (
+                <div className="h-28 flex flex-col items-center justify-center text-slate-300">
+                  <ShoppingBag size={38} strokeWidth={1.4} />
+                  <p className="font-black mt-2 text-xs">Keranjang Kosong</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {cart.map((item, idx) => (
+                    <div
+                      key={`${item.id}-${idx}`}
+                      className="rounded-2xl border border-slate-100 shadow-sm p-3 flex items-center gap-3 bg-white"
+                    >
+                      <div className="w-14 h-14 rounded-xl bg-slate-50 overflow-hidden flex items-center justify-center shrink-0">
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ShoppingBag className="text-slate-300" size={24} />
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-black truncate">
+                          {item.name}
+                        </h3>
+                        <p className="text-orange-500 font-black text-sm mt-1">
+                          {formatRupiah(item.price)}
+                        </p>
+                      </div>
+
+                      <div className="text-center">
+                        <p className="text-[9px] font-bold text-slate-500 mb-1">
+                          Qty
+                        </p>
+
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200">
+                          <button
+                            onClick={() => onUpdateQuantity(item.id, -1)}
+                            className="text-slate-700 hover:text-orange-500"
+                          >
+                          
+                          </button>
+
+                          <span className="font-black text-sm w-3">
+                            {item.quantity}
+                          </span>
+
+                          <button
+                            onClick={() => onUpdateQuantity(item.id, 1)}
+                            className="text-slate-700 hover:text-orange-500"
+                          >
+                          
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section
+              className={`relative overflow-hidden rounded-[22px] p-4 text-white shadow-lg ${
+                isMember ? 'bg-orange-500' : 'bg-[#07122D]'
+              }`}
+            >
+
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-orange-400 shrink-0">
+                    {isMember ? <Sparkles size={24} /> : <Ticket size={24} />}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-black">
+                        {isMember ? 'Member Aktif' : 'Ngolab Membership'}
+                      </h3>
+
+                      {!isMember && (
+                        <span className="px-2.5 py-1 rounded-full bg-orange-500 text-white text-[9px] font-black">
+                          Hemat hingga 20%
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-slate-200 text-xs mt-1 max-w-md">
+                      {isMember
+                        ? 'Gunakan reward dan promo spesial member.'
+                        : 'Nikmati berbagai keuntungan dan diskon spesial untuk member.'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={isMember ? onGoToVouchers : onGoToMembership}
+                  className="px-4 py-2.5 rounded-xl bg-white text-orange-500 font-black text-xs shadow-lg shrink-0"
+                >
+                  {isMember ? 'LIHAT REWARD' : 'SCAN MEMBER'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-white/10">
+                <BenefitItem
+                  icon={<BadgePercent size={18} />}
+                  title="Diskon Spesial"
+                  desc="Setiap pembelian"
+                />
+                <BenefitItem
+                  icon={<Star size={18} />}
+                  title="Poin Reward"
+                  desc="Khusus member"
+                />
+                <BenefitItem
+                  icon={<Gift size={18} />}
+                  title="Promo Spesial"
+                  desc="Hanya untuk member"
+                />
+              </div>
+            </section>
+
+            <section className="bg-white rounded-[22px] border border-slate-100 shadow-sm p-4">
+              <h2 className="text-lg font-black mb-3">Metode Pembayaran</h2>
+
+              <div className="rounded-2xl border border-orange-200 bg-orange-50/30 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-18 h-14 rounded-xl bg-white flex items-center justify-center shrink-0">
+                    <QrCode size={38} className="text-slate-900" />
+                  </div>
+
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-black text-sm">
+                          QRIS (Satu-satunya metode pembayaran)
+                        </h3>
+                        <p className="text-slate-600 font-medium text-xs mt-1">
+                          Bayar dengan scan QR dari semua aplikasi berlogo QRIS.
+                        </p>
+                      </div>
+
+                      <span className="px-2.5 py-1.5 rounded-lg bg-green-50 text-green-600 font-black text-[9px] flex items-center gap-1 shrink-0">
+                        <ShieldCheck size={13} />
+                        Aman
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between sm:justify-end gap-4 md:gap-6">
-                    <div className="flex items-center gap-2 bg-slate-50 px-3 md:px-4 py-1.5 md:py-2 rounded-xl md:rounded-2xl border border-slate-100">
-                      <span className="text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest">Qty</span>
-                      <span className="w-6 md:w-8 text-center font-black text-base md:text-lg text-slate-900">{item.quantity}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-100">
+                <InfoCard
+                  icon={<ShieldCheck size={17} />}
+                  title="Transaksi Aman"
+                  desc="100% terlindungi"
+                />
+                <InfoCard
+                  icon={<Database size={17} />}
+                  title="Data Terjaga"
+                  desc="Privasi aman"
+                />
+                <InfoCard
+                  icon={<ShoppingBag size={17} />}
+                  title="Produk Original"
+                  desc="100% asli"
+                />
+              </div>
+            </section>
+          </div>
+
+          <aside className="space-y-4">
+            <section className="bg-white rounded-[22px] border border-slate-100 shadow-sm overflow-hidden">
+              <div className="bg-orange-50/80 px-4 py-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white text-orange-500 flex items-center justify-center">
+                  <ReceiptText size={20} />
+                </div>
+                <h2 className="text-lg font-black">Ringkasan Pesanan</h2>
+              </div>
+
+              <div className="p-4 space-y-3">
+                <SummaryRow label="Subtotal" value={formatRupiah(subtotal)} />
+
+                {selectedVoucher && discountAmount > 0 && (
+                  <SummaryRow
+                    label="Voucher"
+                    value={`- ${formatRupiah(discountAmount)}`}
+                    orange
+                  />
+                )}
+
+                {pointsUsed > 0 && (
+                  <SummaryRow
+                    label="Poin Digunakan"
+                    value={`- ${formatRupiah(pointsUsed)}`}
+                    orange
+                  />
+                )}
+
+                <SummaryRow label="Ongkos Kirim" value="Rp 0" />
+
+                <div className="border-t border-dashed border-slate-200 pt-3 flex justify-between items-end">
+                  <span className="font-black text-sm">Total Akhir</span>
+                  <span className="text-2xl font-black text-orange-500">
+                    {formatRupiah(total)}
+                  </span>
+                </div>
+
+                {isMember && (
+                  <div className="rounded-xl bg-orange-50 p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-orange-400 text-white flex items-center justify-center">
+                        <Star size={15} fill="currentColor" />
+                      </div>
+                      <div>
+                        <p className="font-black text-xs">Kamu akan dapat</p>
+                        <p className="text-[11px] text-slate-500">
+                          Setelah transaksi berhasil
+                        </p>
+                      </div>
                     </div>
+
+                    <p className="text-green-600 font-black text-xs">
+                      +{rewardPoints} pts
+                    </p>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                )}
 
-          <div className={`rounded-[32px] md:rounded-[40px] p-6 md:p-8 flex flex-col sm:flex-row items-center gap-4 md:gap-6 transition-all duration-500 ${card.bg}`}>
-            <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[24px] flex items-center justify-center shrink-0 ${card.iconBg}`}>
-              {card.icon}
-            </div>
-            <div className="flex-1 text-center sm:text-left min-w-0">
-              <h3 className="font-black text-base md:text-lg truncate">{card.title}</h3>
-              <p className="opacity-80 text-xs md:text-sm leading-tight">
-                {card.desc}
-              </p>
-            </div>
-            {card.button}
-          </div>
-        </div>
-
-        <div className="lg:col-span-2">
-          <div className="glass-card rounded-[32px] md:rounded-[40px] p-6 md:p-8 vision-shadow border-2 border-white h-full flex flex-col">
-            <h2 className="text-xl md:text-2xl font-black text-slate-800 mb-6 md:mb-8">{t.summary}</h2>
-            
-            <div className="space-y-3 md:space-y-4 mb-6 md:mb-8">
-              <div className="flex justify-between text-slate-500 text-sm md:text-base font-medium">
-                <span>{t.subtotal}</span>
-                <span className="font-bold text-slate-800">Rp {subtotal.toLocaleString('id-ID')}</span>
+                <button
+                  disabled={cart.length === 0}
+                  onClick={onConfirm}
+                  className="w-full py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-100 transition-all"
+                >
+                  BAYAR SEKARANG
+                  <ArrowRight size={17} />
+                </button>
               </div>
-              
-              {selectedVoucher && discountAmount > 0 && (
-                <div className="flex justify-between text-orange-600 text-sm md:text-base font-medium">
-                  <div className="flex items-center gap-2"><Ticket size={14}/> <span>{t.voucher}</span></div>
-                  <span className="font-black">- Rp {discountAmount.toLocaleString('id-ID')}</span>
-                </div>
-              )}
+            </section>
 
-              {pointsUsed > 0 && (
-                <div className="flex justify-between text-amber-600 text-sm md:text-base font-medium animate-in slide-in-from-left">
-                  <div className="flex items-center gap-2"><Coins size={14}/> <span>{t.redeemPoints}</span></div>
-                  <span className="font-black">- Rp {pointsUsed.toLocaleString('id-ID')}</span>
-                </div>
-              )}
-
-              <div className="pt-4 border-t border-slate-100 flex justify-between items-end">
-                <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.totalFinal}</span>
-                <span className="text-2xl md:text-3xl font-black text-[#F97316]">Rp {total.toLocaleString('id-ID')}</span>
+            <section className="bg-white rounded-[22px] border border-slate-100 shadow-sm p-4 flex gap-3">
+              <div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center shrink-0">
+                <ShieldCheck size={22} />
               </div>
-            </div>
 
-            <div className="mt-auto space-y-3 md:space-y-4">
-              <button onClick={onConfirm} className="w-full py-4 md:py-5 bg-[#F97316] hover:bg-[#EA580C] text-white rounded-2xl md:rounded-[32px] font-black text-base md:text-lg transition-all vision-shadow active:scale-95 flex items-center justify-center gap-3">
-                {t.payNow} <ArrowRight size={20} />
-              </button>
-              <button onClick={onReset} className="w-full py-2 md:py-4 text-slate-400 font-bold text-xs md:text-sm">{t.cancel}</button>
-            </div>
-          </div>
+              <div>
+                <h3 className="font-black text-sm">
+                  Receipt Digital
+                </h3>
+
+                <p className="text-xs text-slate-600 font-medium mt-1">
+                  Bukti transaksi akan ditampilkan secara otomatis setelah pembayaran berhasil.
+                </p>
+              </div>
+            </section>
+          </aside>
         </div>
-      </div>
-    </div>
+      </main>
+
+      
     </div>
   );
 };
+
+const SummaryRow = ({
+  label,
+  value,
+  orange = false,
+}: {
+  label: string;
+  value: string;
+  orange?: boolean;
+}) => (
+  <div className="flex justify-between items-center text-xs">
+    <span className="text-slate-500 font-bold">{label}</span>
+    <span className={`font-black ${orange ? 'text-orange-500' : ''}`}>
+      {value}
+    </span>
+  </div>
+);
+
+const BenefitItem = ({
+  icon,
+  title,
+  desc,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) => (
+  <div className="flex items-center gap-2">
+    <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-orange-400 shrink-0">
+      {icon}
+    </div>
+    <div>
+      <p className="font-black text-xs">{title}</p>
+      <p className="text-[11px] text-slate-300">{desc}</p>
+    </div>
+  </div>
+);
+
+const InfoCard = ({
+  icon,
+  title,
+  desc,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) => (
+  <div className="flex items-center gap-2">
+    <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
+      {icon}
+    </div>
+    <div>
+      <p className="text-[11px] font-black text-slate-700">{title}</p>
+      <p className="text-[11px] text-slate-500 font-medium">{desc}</p>
+    </div>
+  </div>
+);
 
 export default CartPage;
