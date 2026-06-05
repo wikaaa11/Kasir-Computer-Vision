@@ -94,7 +94,7 @@ const PaymentQRIS: React.FC<PaymentQRISProps> = ({
                 Setelah pembayaran berhasil
               </h3>
               <p className="mt-0.5 text-[10px] font-medium leading-relaxed text-slate-600">
-                Tekan tombol simulasi bayar untuk melanjutkan transaksi.
+                Tekan tombol selesai bayar untuk melanjutkan transaksi.
               </p>
             </div>
           </div>
@@ -114,7 +114,7 @@ const PaymentQRIS: React.FC<PaymentQRISProps> = ({
                 onClick={onSuccess}
                 className="group flex items-center gap-2 rounded-xl bg-orange-500 px-3 py-2.5 text-[9px] font-black uppercase tracking-widest text-white shadow-[0_10px_24px_rgba(249,115,22,0.35)] hover:bg-orange-600 active:scale-95"
               >
-                {t?.simulatePay ?? 'Simulasi Bayar'}
+                {t?.completePayment ?? 'Selesai Bayar'}
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 group-hover:translate-x-1">
                   <ArrowRight size={13} />
                 </span>

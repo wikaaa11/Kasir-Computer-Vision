@@ -4,9 +4,6 @@ import {
   Ticket,
   Sparkles,
   ShoppingBag,
-  Trash2,
-  Minus,
-  Plus,
   ReceiptText,
   ShieldCheck,
   Star,
@@ -42,8 +39,6 @@ const CartPage: React.FC<CartPageProps> = ({
   discountAmount,
   pointsUsed,
   onUpdateQuantity,
-  onRemoveItem,
-  onReset,
   onGoToMembership,
   onGoToVouchers,
   onConfirm,
@@ -58,8 +53,8 @@ const CartPage: React.FC<CartPageProps> = ({
   const rewardPoints = Math.floor(total / 1000);
 
   return (
-    <div className="w-full min-h-[calc(100vh-76px)] bg-white text-slate-900 flex flex-col">
-      <main className="flex-1 w-full max-w-[1100px] mx-auto px-4 py-6 flex flex-col justify-center">
+    <div className="flex min-h-[calc(100vh-76px)] w-full flex-col bg-white text-slate-900">
+      <main className="w-full max-w-[1100px] mx-auto px-4 pt-6 pb-10 flex flex-col">
         <section className="mb-4 flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-white border border-orange-100 shadow-sm flex items-center justify-center text-orange-500">
             <ShoppingBag size={22} />
@@ -121,24 +116,10 @@ const CartPage: React.FC<CartPageProps> = ({
                           Qty
                         </p>
 
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200">
-                          <button
-                            onClick={() => onUpdateQuantity(item.id, -1)}
-                            className="text-slate-700 hover:text-orange-500"
-                          >
-                          
-                          </button>
-
+                        <div className="flex items-center justify-center px-4 py-2 rounded-xl border border-slate-200">
                           <span className="font-black text-sm w-3">
                             {item.quantity}
                           </span>
-
-                          <button
-                            onClick={() => onUpdateQuantity(item.id, 1)}
-                            className="text-slate-700 hover:text-orange-500"
-                          >
-                          
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -152,7 +133,6 @@ const CartPage: React.FC<CartPageProps> = ({
                 isMember ? 'bg-orange-500' : 'bg-[#07122D]'
               }`}
             >
-
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-orange-400 shrink-0">
@@ -284,7 +264,7 @@ const CartPage: React.FC<CartPageProps> = ({
                   />
                 )}
 
-                <SummaryRow label="Ongkos Kirim" value="Rp 0" />
+                
 
                 <div className="border-t border-dashed border-slate-200 pt-3 flex justify-between items-end">
                   <span className="font-black text-sm">Total Akhir</span>
@@ -330,12 +310,11 @@ const CartPage: React.FC<CartPageProps> = ({
               </div>
 
               <div>
-                <h3 className="font-black text-sm">
-                  Receipt Digital
-                </h3>
+                <h3 className="font-black text-sm">Receipt Digital</h3>
 
                 <p className="text-xs text-slate-600 font-medium mt-1">
-                  Bukti transaksi akan ditampilkan secara otomatis setelah pembayaran berhasil.
+                  Bukti transaksi akan ditampilkan secara otomatis setelah
+                  pembayaran berhasil.
                 </p>
               </div>
             </section>
@@ -343,7 +322,11 @@ const CartPage: React.FC<CartPageProps> = ({
         </div>
       </main>
 
-      
+      <footer className="border-t border-slate-200 py-6">
+        <p className="text-center text-slate-400 text-sm font-medium">
+          © 2024 Ngolab System • Mitra Terpercaya Belanja Anda
+        </p>
+      </footer>
     </div>
   );
 };

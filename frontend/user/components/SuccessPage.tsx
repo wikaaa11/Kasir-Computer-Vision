@@ -20,9 +20,9 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#4B596A] p-3">
       <div className="relative flex w-full max-w-[380px] flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_22px_60px_rgba(15,23,42,0.35)]">
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-green-100/60 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-green-100/70 blur-3xl" />
-          <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-bl from-green-50/70 via-transparent to-transparent" />
+          <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-orange-100/60 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-orange-100/70 blur-3xl" />
+          <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-bl from-orange-50/70 via-transparent to-transparent" />
         </div>
 
         <div className="relative z-20 flex flex-col items-center px-4 py-4">
@@ -47,7 +47,7 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
             {t?.thankYou ?? 'Terima Kasih!'}
           </h1>
 
-          <p className="mt-1 text-center text-sm font-black text-green-600">
+          <p className="mt-1 text-center text-sm font-black text-orange-500">
             Pembayaran berhasil
           </p>
 
@@ -58,11 +58,11 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
 
           <div className="mt-4 w-full rounded-[20px] border border-slate-100 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.10)]">
             <div className="mb-3 flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-green-50 text-green-600">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
                 <ReceiptText size={16} />
               </div>
 
-              <h2 className="text-[11px] font-black uppercase tracking-wide text-green-600">
+              <h2 className="text-[11px] font-black uppercase tracking-wide text-orange-500">
                 Struk Transaksi
               </h2>
             </div>
@@ -73,7 +73,7 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
                   ID Transaksi
                 </span>
 
-                <span className="text-right text-xs font-black text-slate-950 break-all">
+                <span className="break-all text-right text-xs font-black text-slate-950">
                   {transactionId || 'CV-ORD-1780563640777'}
                 </span>
               </div>
@@ -90,21 +90,21 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
             </div>
           </div>
 
-          <div className="mt-3 flex w-full items-center gap-3 rounded-[18px] border-2 border-green-200 bg-green-50 p-3 shadow-[0_8px_24px_rgba(34,197,94,0.16)]">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-green-400 text-white shadow-[0_8px_18px_rgba(34,197,94,0.25)]">
+          <div className="mt-3 flex w-full items-center gap-3 rounded-[18px] border border-orange-200 bg-orange-50/60 p-3 shadow-[0_8px_24px_rgba(249,115,22,0.08)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-[0_8px_18px_rgba(249,115,22,0.18)]">
               <ShoppingBag size={20} />
             </div>
 
             <div>
-              <h3 className="text-xs font-black text-green-800">
+              <h3 className="text-xs font-black text-orange-700">
                 Terima kasih telah berbelanja di Ngolab!
               </h3>
+
               <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-slate-600">
-                Semoga harimu menyenangkan. Sampai jumpa di transaksi
-                berikutnya!
+                Semoga harimu menyenangkan. Sampai jumpa di transaksi berikutnya!
                 <Heart
                   size={11}
-                  className="ml-1 inline-block text-green-500"
+                  className="ml-1 inline-block text-orange-500"
                   fill="currentColor"
                 />
               </p>
@@ -114,7 +114,7 @@ const SuccessPage: React.FC<SuccessPageProps> = ({
           <button
             onClick={onFinish}
             disabled={isSyncing}
-            className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-orange-500 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(249,115,22,0.35)] transition hover:bg-orange-600 active:scale-95 disabled:opacity-50"
+            className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-orange-500 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(249,115,22,0.30)] transition hover:bg-orange-600 active:scale-95 disabled:opacity-50"
           >
             {isSyncing
               ? t?.finishing ?? 'Menyelesaikan...'

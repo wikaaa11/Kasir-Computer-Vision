@@ -1,6 +1,13 @@
-
 import React, { useMemo, useState } from 'react';
-import { Target, Lock, User, ArrowRight, Loader2, AlertCircle, Cpu } from 'lucide-react';
+import {
+  Lock,
+  User,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+  Eye,
+  Check,
+} from 'lucide-react';
 import type { AdminRole, AdminUser } from '../types';
 
 interface LoginProps {
@@ -9,24 +16,36 @@ interface LoginProps {
 
 type LoginRole = Extract<AdminRole, 'cv_admin'>;
 
-const ROLE_CONFIG: Record<LoginRole, { label: string; name: string; username: string; password: string; icon: any }> = {
+const ROLE_CONFIG: Record<
+  LoginRole,
+  {
+    label: string;
+    name: string;
+    username: string;
+    password: string;
+  }
+> = {
   cv_admin: {
     label: 'Computer Vision Admin',
     name: 'CV Admin',
     username: 'admin',
     password: 'admin123',
-    icon: Cpu,
   },
 };
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<LoginRole>('cv_admin');
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin123');
+  const [selectedRole] = useState<LoginRole>('cv_admin');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedAccount = useMemo(() => ROLE_CONFIG[selectedRole], [selectedRole]);
+  const selectedAccount = useMemo(
+    () => ROLE_CONFIG[selectedRole],
+    [selectedRole]
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,111 +53,164 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError(null);
 
     setTimeout(() => {
-      if (username === selectedAccount.username && password === selectedAccount.password) {
+      if (
+        username === selectedAccount.username &&
+        password === selectedAccount.password
+      ) {
         onLogin({ name: selectedAccount.name, role: selectedRole });
       } else {
         setError('Username atau password salah.');
         setIsLoading(false);
       }
-    }, 1500);
+    }, 1000);
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-orange-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-xl shadow-orange-200">
-            <Target size={32} />
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Vision<span className="text-orange-600">Admin</span></h1>
-          <p className="text-slate-500 mt-2 font-medium">Enterprise Retail Management Console</p>
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#FFF7ED] p-6">
+      <div className="grid h-[560px] w-full max-w-4xl grid-cols-1 overflow-hidden rounded-[26px] bg-white shadow-[0_18px_55px_rgba(15,23,42,0.08)] lg:grid-cols-[1fr_0.72fr]">
+        {/* LEFT IMAGE */}
+        <div className="relative hidden overflow-hidden bg-[#FFE8D4] lg:block">
+          <img
+            src="/login.png"
+            alt="Vision Admin Illustration"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-white/10" />
         </div>
 
-        <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
-          <div className="grid grid-cols-1 gap-2 mb-6">
-            {(Object.keys(ROLE_CONFIG) as LoginRole[]).map((role) => {
-              const config = ROLE_CONFIG[role];
-              const Icon = config.icon;
-              const active = selectedRole === role;
+        {/* RIGHT FORM */}
+        <div className="relative flex items-center justify-center bg-white px-6 py-5">
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-orange-50/50 to-transparent" />
 
-              return (
-                <button
-                  key={role}
-                  type="button"
-                  onClick={() => setSelectedRole(role)}
-                  className={`p-3 rounded-2xl border text-left transition-all ${active ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-orange-200 hover:bg-orange-50/50'}`}
-                >
-                  <Icon size={16} className="mb-2" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest">{config.label}</p>
-                </button>
-              );
-            })}
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Username</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input 
-                  type="text" 
-                  required
-                  placeholder={selectedAccount.username} 
-                  className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-transparent rounded-2xl outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 transition-all text-sm"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+          <div className="relative z-10 w-full max-w-[310px]">
+            <div className="mb-4 text-center">
+              <div className="mx-auto mb-3 flex h-[58px] w-[58px] items-center justify-center overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-[0_8px_20px_rgba(15,23,42,0.08)] ring-4 ring-slate-50">
+                <img
+                  src="/logo.jpeg"
+                  alt="Ngolab Logo"
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input 
-                  type="password" 
-                  required
-                  placeholder={selectedAccount.password} 
-                  className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-transparent rounded-2xl outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 transition-all text-sm"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest px-1">
-                Login cepat: {selectedAccount.username} / {selectedAccount.password}
+              <h1 className="text-[19px] font-black tracking-tight text-[#0F172A]">
+                Selamat datang kembali! 👋
+              </h1>
+              <p className="mt-1 text-[11px] font-medium text-slate-500">
+                Masuk untuk melanjutkan ke dashboard VisionAdmin
               </p>
             </div>
 
-            {error && (
-              <div className="flex items-center gap-2 text-red-500 text-xs font-bold bg-red-50 p-3 rounded-xl animate-in fade-in slide-in-from-top-1">
-                <AlertCircle size={14} />
-                <span>{error}</span>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div>
+                <label className="mb-1.5 block text-[11px] font-extrabold text-slate-800">
+                  Username
+                </label>
+
+                <div className="relative">
+                  <div className="absolute left-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
+                    <User size={16} />
+                  </div>
+
+                  <input
+                    type="text"
+                    required
+                    placeholder="Masukkan username"
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-xs font-semibold text-slate-700 outline-none transition-all focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
               </div>
-            )}
 
-            <button 
-              type="submit" 
-              disabled={isLoading}
-              className="w-full bg-orange-600 text-white rounded-2xl py-4 font-bold flex items-center justify-center gap-2 hover:bg-orange-700 transition-all shadow-lg shadow-orange-100 active:scale-[0.98] disabled:opacity-50"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="animate-spin" size={20} />
-                  <span>Memverifikasi...</span>
-                </>
-              ) : (
-                <>
-                  <span>Masuk ke Dashboard</span>
-                  <ArrowRight size={20} />
-                </>
+              <div>
+                <label className="mb-1.5 block text-[11px] font-extrabold text-slate-800">
+                  Password
+                </label>
+
+                <div className="relative">
+                  <div className="absolute left-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
+                    <Lock size={16} />
+                  </div>
+
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Masukkan password"
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-11 text-xs font-semibold text-slate-700 outline-none transition-all focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+                  >
+                    <Eye size={17} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => setRemember((prev) => !prev)}
+                  className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500"
+                >
+                  <span
+                    className={`flex h-[18px] w-[18px] items-center justify-center rounded-md transition ${
+                      remember
+                        ? 'bg-orange-500 text-white'
+                        : 'border border-slate-300 bg-white text-transparent'
+                    }`}
+                  >
+                    <Check size={12} strokeWidth={4} />
+                  </span>
+                  Ingat saya
+                </button>
+
+                <button
+                  type="button"
+                  className="text-[11px] font-extrabold text-orange-500 transition hover:text-orange-600"
+                >
+              
+                </button>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 rounded-xl bg-red-50 p-2 text-[11px] font-bold text-red-500">
+                  <AlertCircle size={13} />
+                  <span>{error}</span>
+                </div>
               )}
-            </button>
-          </form>
-        </div>
 
-        <p className="text-center text-slate-400 text-[10px] mt-8 font-bold uppercase tracking-widest">
-          Authorized Personnel Only • IP Logged
-        </p>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="mt-1.5 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-xs font-black text-white shadow-[0_10px_22px_rgba(249,115,22,0.22)] transition-all hover:from-orange-600 hover:to-orange-600 active:scale-[0.98] disabled:opacity-60"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} />
+                    <span>Memverifikasi...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Masuk ke Dashboard</span>
+                    <ArrowRight size={18} />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <p className="mt-4 text-center text-[8px] font-bold uppercase tracking-[0.18em] text-slate-300">
+              Authorized Personnel Only
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
