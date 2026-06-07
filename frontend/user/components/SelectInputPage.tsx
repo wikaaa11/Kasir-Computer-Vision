@@ -41,7 +41,7 @@ const SelectInputPage: React.FC<SelectInputPageProps> = ({
         {/* BACK */}
         <button
           onClick={onBack}
-          className="inline-flex w-fit items-center gap-2 rounded-full border border-orange-100 bg-orange-50 px-4 py-1.5 text-xs font-bold text-orange-500 transition hover:bg-orange-100"
+          className="mt-3 inline-flex w-fit items-center gap-2 rounded-full border border-orange-100 bg-orange-50 px-4 py-1.5 text-xs font-bold text-orange-500 transition hover:bg-orange-100"
         >
           <ArrowLeft size={14} />
           Kembali ke Beranda
