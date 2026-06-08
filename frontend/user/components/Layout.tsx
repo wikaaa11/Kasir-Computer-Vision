@@ -19,14 +19,14 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
   if (hideHeaderFooter) {
     return (
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="min-h-screen w-full bg-white overflow-x-hidden overflow-y-auto">
         {children}
       </div>
     );
   }
 
   return (
-    <div className="w-full h-screen bg-white flex flex-col overflow-hidden">
+    <div className="w-full min-h-screen bg-white flex flex-col overflow-x-hidden">
       {/* HEADER */}
       <header className="w-full bg-white border-b border-slate-200 shrink-0">
         <div className="w-full px-4 md:px-8 lg:px-12 h-16 flex items-center justify-between">
@@ -71,7 +71,7 @@ const Layout: React.FC<LayoutProps> = ({
       </header>
 
       {/* MAIN */}
-      <main className="flex-1 min-h-0 bg-white overflow-hidden">
+      <main className="flex-1 bg-white overflow-x-hidden overflow-y-auto">
         {children}
       </main>
 

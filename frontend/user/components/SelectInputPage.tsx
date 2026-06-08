@@ -11,6 +11,7 @@ interface SelectInputPageProps {
   onSelectAI: () => void;
   onSelectBarcode: () => void;
   onBack: () => void;
+  t?: any;
 }
 
 const BenefitItem = ({
@@ -34,49 +35,51 @@ const SelectInputPage: React.FC<SelectInputPageProps> = ({
   onSelectAI,
   onSelectBarcode,
   onBack,
+  t,
 }) => {
   return (
-    <div className="w-full h-full min-h-full overflow-hidden bg-white px-4 py-2">
-      <div className="mx-auto flex h-full w-full max-w-6xl flex-col bg-white px-4">
+    <div className="w-full min-h-full bg-white px-4 py-4">
+      <div className="mx-auto flex w-full max-w-6xl flex-col bg-white px-2 sm:px-4">
         {/* BACK */}
         <button
           onClick={onBack}
-          className="mt-3 inline-flex w-fit items-center gap-2 rounded-full border border-orange-100 bg-orange-50 px-4 py-1.5 text-xs font-bold text-orange-500 transition hover:bg-orange-100"
+          className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-orange-100 bg-orange-50 px-4 py-1.5 text-xs font-bold text-orange-500 transition hover:bg-orange-100"
         >
           <ArrowLeft size={14} />
           Kembali ke Beranda
         </button>
 
         {/* TITLE */}
-        <div className="relative mt-1 text-center">
+        <div className="relative mt-5 text-center">
           <h2 className="text-2xl font-extrabold text-slate-950 md:text-3xl">
             Pilih Metode Input
           </h2>
 
           <div className="mx-auto mt-1.5 h-1 w-10 rounded-full bg-orange-500" />
 
-          <p className="mx-auto mt-1.5 max-w-xl text-xs font-medium leading-relaxed text-slate-500">
-            Gunakan YOLO untuk deteksi otomatis atau pemindai barcode konvensional.
+          <p className="mx-auto mt-2 max-w-xl text-xs font-medium leading-relaxed text-slate-500">
+            Gunakan YOLO untuk deteksi otomatis atau pemindai barcode
+            konvensional.
           </p>
         </div>
 
         {/* CARDS */}
-        <div className="mx-auto mt-10 grid w-full max-w-[900px] grid-cols-1 gap-4 bg-white lg:grid-cols-2">
+        <div className="mx-auto mt-6 grid w-full max-w-[900px] grid-cols-1 gap-4 bg-white lg:grid-cols-2">
           {/* CAMERA */}
           <button
             onClick={onSelectAI}
-            className="group relative flex h-[400px] flex-col overflow-hidden rounded-[24px] border-2 border-orange-200 bg-white p-5 text-left shadow-[0_8px_22px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400 hover:shadow-[0_16px_40px_rgba(249,115,22,0.16)]"
+            className="group relative flex min-h-[360px] flex-col rounded-[24px] border-2 border-orange-200 bg-white p-5 text-left shadow-[0_8px_22px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-orange-400 hover:shadow-[0_16px_40px_rgba(249,115,22,0.16)] sm:min-h-[400px]"
           >
             <div className="absolute left-5 top-5 inline-flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-bold text-orange-500">
               <Sparkles size={13} />
               Rekomendasi
             </div>
 
-            <div className="mt-6 flex h-24 items-center justify-center bg-white">
+            <div className="mt-8 flex h-24 items-center justify-center bg-white">
               <img
                 src="/camera.png"
                 alt="Scan Camera"
-                className="h-28 w-44 object-contain bg-white"
+                className="h-24 w-40 object-contain bg-white sm:h-28 sm:w-44"
               />
             </div>
 
@@ -104,13 +107,13 @@ const SelectInputPage: React.FC<SelectInputPageProps> = ({
           {/* BARCODE */}
           <button
             onClick={onSelectBarcode}
-            className="group relative flex h-[400px] flex-col overflow-hidden rounded-[24px] border-2 border-blue-200 bg-white p-5 text-left shadow-[0_8px_22px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-[0_16px_40px_rgba(37,99,235,0.16)]"
+            className="group relative flex min-h-[360px] flex-col rounded-[24px] border-2 border-blue-200 bg-white p-5 text-left shadow-[0_8px_22px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-[0_16px_40px_rgba(37,99,235,0.16)] sm:min-h-[400px]"
           >
-            <div className="mt-6 flex h-24 items-center justify-center bg-white">
+            <div className="mt-8 flex h-24 items-center justify-center bg-white">
               <img
                 src="/barcode.png"
                 alt="Scan Barcode"
-                className="h-28 w-44 object-contain bg-white"
+                className="h-24 w-40 object-contain bg-white sm:h-28 sm:w-44"
               />
             </div>
 

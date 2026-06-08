@@ -38,7 +38,6 @@ const CartPage: React.FC<CartPageProps> = ({
   selectedVoucher,
   discountAmount,
   pointsUsed,
-  onUpdateQuantity,
   onGoToMembership,
   onGoToVouchers,
   onConfirm,
@@ -53,9 +52,9 @@ const CartPage: React.FC<CartPageProps> = ({
   const rewardPoints = Math.floor(total / 1000);
 
   return (
-    <div className="flex min-h-[calc(100vh-76px)] w-full flex-col bg-white text-slate-900">
-      <main className="w-full max-w-[1100px] mx-auto px-4 pt-6 pb-10 flex flex-col">
-        <section className="mb-4 flex items-center gap-3">
+    <div className="flex w-full flex-col bg-white text-slate-900">
+      <main className="w-full max-w-[1100px] mx-auto px-4 pt-5 pb-2 flex flex-col">
+        <section className="mb-3 flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-white border border-orange-100 shadow-sm flex items-center justify-center text-orange-500">
             <ShoppingBag size={22} />
           </div>
@@ -69,7 +68,7 @@ const CartPage: React.FC<CartPageProps> = ({
         </section>
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_350px] gap-4">
-          <div className="space-y-4">
+          <div className="space-y-3">
             <section className="bg-white rounded-[22px] border border-slate-100 shadow-sm p-4">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-black">Keranjang Belanja</h2>
@@ -236,7 +235,7 @@ const CartPage: React.FC<CartPageProps> = ({
             </section>
           </div>
 
-          <aside className="space-y-4">
+          <aside className="space-y-3">
             <section className="bg-white rounded-[22px] border border-slate-100 shadow-sm overflow-hidden">
               <div className="bg-orange-50/80 px-4 py-4 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white text-orange-500 flex items-center justify-center">
@@ -263,8 +262,6 @@ const CartPage: React.FC<CartPageProps> = ({
                     orange
                   />
                 )}
-
-                
 
                 <div className="border-t border-dashed border-slate-200 pt-3 flex justify-between items-end">
                   <span className="font-black text-sm">Total Akhir</span>
@@ -321,12 +318,6 @@ const CartPage: React.FC<CartPageProps> = ({
           </aside>
         </div>
       </main>
-
-      <footer className="border-t border-slate-200 py-6">
-        <p className="text-center text-slate-400 text-sm font-medium">
-          © 2024 Ngolab System • Mitra Terpercaya Belanja Anda
-        </p>
-      </footer>
     </div>
   );
 };

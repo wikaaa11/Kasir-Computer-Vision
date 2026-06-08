@@ -49,7 +49,6 @@ const ProductCard = ({
   </div>
 );
 
-
 const MembershipCard = () => (
   <div className="w-full max-w-[445px] bg-white rounded-[20px] shadow-[0_12px_32px_rgba(15,23,42,0.10)] px-4 py-2.5 flex items-center gap-3">
     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2E1065] to-[#6D28D9] flex items-center justify-center flex-shrink-0">
@@ -78,9 +77,9 @@ const MembershipCard = () => (
 
 const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
   return (
-    <div className="w-full h-full bg-white overflow-hidden">
-      <section className="w-full h-full bg-white px-4 sm:px-6 lg:px-8 pt-4 pb-0 flex items-center overflow-hidden">
-        <div className="max-w-7xl mx-auto w-full bg-white grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-0 items-center">
+    <div className="w-full min-h-full bg-white">
+      <section className="w-full min-h-[calc(100vh-118px)] bg-white px-4 sm:px-6 lg:px-8 pt-14 pb-10 flex items-center">
+        <div className="max-w-7xl mx-auto w-full bg-white grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-0 items-center">
           {/* LEFT */}
           <div className="flex flex-col items-start bg-white">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-50 rounded-full border border-orange-200 text-[#EA580C] text-xs font-extrabold">
@@ -110,13 +109,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
               <Camera size={20} className="group-hover:rotate-12 transition-transform" />
             </button>
 
-            <div className="mt-12">
+            <div className="mt-8 lg:mt-12 w-full">
               <MembershipCard />
             </div>
           </div>
 
           {/* RIGHT */}
-          <div className="relative flex items-center justify-center h-[360px] lg:h-[420px] -mt-3 bg-white">
+          <div className="relative flex items-center justify-center h-[420px] lg:h-[420px] mt-4 lg:mt-0 bg-white">
             <div className="relative z-10 flex items-center justify-center w-[315px] h-[315px] lg:w-[430px] lg:h-[430px] bg-transparent">
               <img
                 src="/keranjangg.png"
@@ -125,7 +124,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
               />
             </div>
 
-            <div className="absolute top-1 right-6 lg:right-10 z-20 animate-float-slow">
+            <div className="absolute top-6 right-2 sm:right-6 lg:right-10 z-20 animate-float-slow">
               <ProductCard
                 name="Chips"
                 sub="Keripik Original"
@@ -134,7 +133,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
               />
             </div>
 
-            <div className="absolute top-[175px] lg:top-[205px] right-0 lg:right-4 z-20 hidden sm:block animate-float-slow">
+            <div className="absolute top-[190px] lg:top-[205px] right-0 lg:right-4 z-20 hidden sm:block animate-float-slow">
               <ProductCard
                 name="Milk"
                 sub="Susu UHT 1L"
@@ -143,7 +142,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
               />
             </div>
 
-            <div className="absolute top-[34%] left-0 lg:left-8 z-20 animate-float-medium">
+            <div className="absolute top-[40%] left-0 lg:left-8 z-20 animate-float-medium">
               <ProductCard
                 name="Coffee"
                 sub="Kopi Latte"
@@ -152,7 +151,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, t }) => {
               />
             </div>
 
-            <div className="absolute bottom-0 left-8 lg:left-14 z-20 animate-float-slow">
+            <div className="absolute bottom-6 left-8 lg:left-14 z-20 animate-float-slow">
               <ProductCard
                 name="Water"
                 sub="Air Mineral 600ml"
