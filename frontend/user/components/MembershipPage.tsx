@@ -1,6 +1,7 @@
 
-import React from 'react';
-import { User, QrCode, ArrowRight, X, Loader2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { User, ArrowRight, X, Loader2 } from 'lucide-react';
+import { Html5Qrcode } from 'html5-qrcode';
 
 interface MembershipPageProps {
   onSkip: () => void;
@@ -11,6 +12,9 @@ interface MembershipPageProps {
 
 const MembershipPage: React.FC<MembershipPageProps> = ({ onSkip, onDetected, isChecking = false, t }) => {
   const [memberCode, setMemberCode] = React.useState('MEM-001');
+  const [scanError, setScanError] = useState<string | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerContainerRef = useRef<HTMLDivElement>(null);
 
   const handleCheckMember = () => {
     const cleanCode = memberCode.trim();
@@ -20,6 +24,82 @@ const MembershipPage: React.FC<MembershipPageProps> = ({ onSkip, onDetected, isC
     }
     onDetected(cleanCode);
   };
+
+  const extractMemberCode = (decodedText: string): string | null => {
+    const trimmed = decodedText.trim();
+    if (!trimmed) return null;
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === 'object') {
+        return parsed.user_id || parsed.member_id || parsed.memberCode || parsed.code || null;
+      }
+    } catch {
+      return trimmed;
+    }
+    return null;
+  };
+
+  const onQrResult = (decodedText: string) => {
+    if (isChecking) return;
+    
+    const code = extractMemberCode(decodedText);
+    if (code) {
+      onDetected(code);
+      stopScanner();
+    }
+  };
+
+  const startScanner = async () => {
+    if (isChecking || !scannerContainerRef.current) return;
+
+    try {
+      setScanError(null);
+      const html5QrCode = new Html5Qrcode(scannerContainerRef.current.id, {
+        verbose: false,
+      });
+      
+      scannerRef.current = html5QrCode;
+
+      await html5QrCode.start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          qrbox: { width: 200, height: 200 },
+        },
+        onQrResult,
+        (errorMessage) => {
+          if (!isChecking) {
+            console.debug('QR scan error:', errorMessage);
+          }
+        }
+      );
+    } catch (err: any) {
+      console.error('Failed to start scanner:', err);
+      setScanError(err?.message || 'Tidak dapat mengakses kamera. Pastikan izin kamera diizinkan.');
+    }
+  };
+
+  const stopScanner = async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+        scannerRef.current.clear();
+      } catch (err) {
+        console.error('Failed to stop scanner:', err);
+      }
+      scannerRef.current = null;
+    }
+  };
+
+useEffect(() => {
+    if (!isChecking) {
+      startScanner();
+    }
+    return () => {
+      stopScanner();
+    };
+  }, [isChecking]);
 
   return (
     <div className="fixed inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center p-4 md:p-6 overflow-hidden">
@@ -48,7 +128,7 @@ const MembershipPage: React.FC<MembershipPageProps> = ({ onSkip, onDetected, isC
           <p className="text-sm md:text-[15px] text-slate-400 max-w-[520px]">{t.discountDesc}</p>
         </div>
 
-        {/* Scan Frame */}
+{/* Scan Frame */}
         <div className="relative w-full aspect-square max-w-[230px] md:max-w-[260px] mb-4 md:mb-5">
           <div className="absolute inset-0 border-2 border-white/10 rounded-[28px] md:rounded-[40px]" />
           <div className="absolute top-0 left-0 w-9 h-9 md:w-10 md:h-10 border-t-4 border-l-4 border-[#F97316] rounded-tl-[20px] md:rounded-tl-[28px]" />
@@ -56,26 +136,36 @@ const MembershipPage: React.FC<MembershipPageProps> = ({ onSkip, onDetected, isC
           <div className="absolute bottom-0 left-0 w-9 h-9 md:w-10 md:h-10 border-b-4 border-l-4 border-[#F97316] rounded-bl-[20px] md:rounded-bl-[28px]" />
           <div className="absolute bottom-0 right-0 w-9 h-9 md:w-10 md:h-10 border-b-4 border-r-4 border-[#F97316] rounded-br-[20px] md:rounded-br-[28px]" />
           
-          <div className="absolute inset-5 md:inset-7 flex items-center justify-center">
-            {isChecking ? (
-              <Loader2 size={64} className="text-[#F97316] animate-spin opacity-60" />
+          <div className="absolute inset-5 md:inset-7 flex items-center justify-center overflow-hidden rounded-[20px]">
+            {scanError ? (
+              <div className="text-center p-4">
+                <div className="text-red-400 text-xs font-bold mb-2">Error Kamera</div>
+                <div className="text-slate-400 text-[10px]">{scanError}</div>
+              </div>
             ) : (
-              <QrCode size={96} className="text-white/20" />
+              <div 
+                id="qr-reader" 
+                ref={scannerContainerRef}
+                className="w-full h-full"
+              />
             )}
-            {!isChecking && <div className="scan-line !bg-[#F97316]" />}
           </div>
         </div>
 
-        <div className="w-full mb-3">
+<div className="flex flex-col gap-2.5 w-full">
           <input
+            type="text"
             value={memberCode}
             onChange={(e) => setMemberCode(e.target.value)}
-            placeholder="Contoh: MEM-001"
-            className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#F97316]"
+            placeholder="Masukkan kode member..."
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-[22px] text-white text-center font-bold text-sm placeholder-slate-500 focus:outline-none focus:border-[#F97316]/50"
+            disabled={isChecking}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !isChecking) {
+                handleCheckMember();
+              }
+            }}
           />
-        </div>
-
-        <div className="flex flex-col gap-2.5 w-full">
           <button 
             onClick={handleCheckMember}
             disabled={isChecking}
@@ -84,7 +174,7 @@ const MembershipPage: React.FC<MembershipPageProps> = ({ onSkip, onDetected, isC
             {isChecking ? t.check + '...' : t.simulateScan}
             {!isChecking && <ArrowRight size={20} />}
           </button>
-          
+
           <button 
             onClick={onSkip}
             disabled={isChecking}
