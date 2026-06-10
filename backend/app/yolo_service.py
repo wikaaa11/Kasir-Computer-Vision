@@ -229,7 +229,13 @@ def detect_products(frame, catalog, include_debug=False):
         return (result, debug) if include_debug else result
 
     # PERBAIKAN: Naik confidence agar false positive berkurang
-    results = _MODEL.predict(frame, conf=0.3, iou=0.3, verbose=False, imgsz=640)
+    results = _MODEL.predict(
+    frame,
+    conf=0.5,
+    iou=0.5,
+    verbose=False,
+    imgsz=640
+)
 
     if not results or results[0].boxes is None:
         return ([], debug) if include_debug else []

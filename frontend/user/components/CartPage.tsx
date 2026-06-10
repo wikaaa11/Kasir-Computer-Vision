@@ -49,7 +49,13 @@ const CartPage: React.FC<CartPageProps> = ({
 
   const total = Math.max(0, subtotal - discountAmount - pointsUsed);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const rewardPoints = Math.floor(total / 1000);
+
+  const rewardPoints = cart.reduce((sum, item) => {
+    const itemPoint =
+      Number((item as any).cashbackPoints ?? (item as any).points ?? 0);
+
+    return sum + itemPoint * item.quantity;
+  }, 0);
 
   return (
     <div className="flex w-full flex-col bg-white text-slate-900">
@@ -89,12 +95,12 @@ const CartPage: React.FC<CartPageProps> = ({
                       key={`${item.id}-${idx}`}
                       className="rounded-2xl border border-slate-100 shadow-sm p-3 flex items-center gap-3 bg-white"
                     >
-                      <div className="w-14 h-14 rounded-xl bg-slate-50 overflow-hidden flex items-center justify-center shrink-0">
+                      <div className="w-16 h-16 rounded-xl border border-slate-200 bg-white shadow-sm p-1 overflow-hidden flex items-center justify-center shrink-0">
                         {item.imageUrl ? (
                           <img
                             src={item.imageUrl}
                             alt={item.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                           />
                         ) : (
                           <ShoppingBag className="text-slate-300" size={24} />
@@ -134,7 +140,7 @@ const CartPage: React.FC<CartPageProps> = ({
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-orange-400 shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-white shrink-0">
                     {isMember ? <Sparkles size={24} /> : <Ticket size={24} />}
                   </div>
 
@@ -151,7 +157,7 @@ const CartPage: React.FC<CartPageProps> = ({
                       )}
                     </div>
 
-                    <p className="text-slate-200 text-xs mt-1 max-w-md">
+                    <p className="text-white/90 text-xs mt-1 max-w-md">
                       {isMember
                         ? 'Gunakan reward dan promo spesial member.'
                         : 'Nikmati berbagai keuntungan dan diskon spesial untuk member.'}
@@ -167,7 +173,7 @@ const CartPage: React.FC<CartPageProps> = ({
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-white/10">
+              <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-white/15">
                 <BenefitItem
                   icon={<BadgePercent size={18} />}
                   title="Diskon Spesial"
@@ -270,7 +276,7 @@ const CartPage: React.FC<CartPageProps> = ({
                   </span>
                 </div>
 
-                {isMember && (
+                {isMember && rewardPoints > 0 && (
                   <div className="rounded-xl bg-orange-50 p-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-orange-400 text-white flex items-center justify-center">
@@ -349,12 +355,12 @@ const BenefitItem = ({
   desc: string;
 }) => (
   <div className="flex items-center gap-2">
-    <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-orange-400 shrink-0">
+    <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center text-white shrink-0">
       {icon}
     </div>
     <div>
-      <p className="font-black text-xs">{title}</p>
-      <p className="text-[11px] text-slate-300">{desc}</p>
+      <p className="font-black text-xs text-white">{title}</p>
+      <p className="text-[11px] text-white/80">{desc}</p>
     </div>
   </div>
 );

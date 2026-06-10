@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import {
-  ArrowUpRight,
-  ArrowDownRight,
   RefreshCw,
   Radio,
   ExternalLink,
   Target,
   TrendingUp,
+  ReceiptText,
+  PackageCheck,
 } from 'lucide-react';
 import {
   XAxis,
@@ -25,10 +25,10 @@ interface DashboardProps {
 type Period = 'today' | 'week' | 'month';
 type StatType = 'revenue' | 'transaction' | 'item';
 
-const STAT_IMAGES: Record<StatType, string> = {
-  revenue: '/public/revenue.png',
-  transaction: '/public/transaction.png',
-  item: '/public/items.png',
+const STAT_ICONS: Record<StatType, React.ElementType> = {
+  revenue: TrendingUp,
+  transaction: ReceiptText,
+  item: PackageCheck,
 };
 
 const formatRupiah = (value: number) =>
@@ -76,46 +76,27 @@ const isSameMonth = (date: Date, target: Date) =>
 const StatCard = ({
   title,
   value,
-  change,
   type,
 }: {
   title: string;
   value: string | number;
-  change: number;
   type: StatType;
 }) => {
-  const isUp = change >= 0;
+  const Icon = STAT_ICONS[type];
 
   return (
-    <div className="relative min-h-[210px] overflow-hidden rounded-[24px] border border-slate-100 bg-white p-6 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
-      <div className="relative z-10">
-        <p className="text-sm font-bold text-slate-500">{title}</p>
-
-        <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">
-          {value}
-        </h2>
-
-        <div className="mt-4 flex items-center gap-2">
-          <div
-            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-black ${
-              isUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
-            }`}
-          >
-            {isUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-            {Math.abs(change)}%
-          </div>
-
-          <span className="text-xs font-semibold text-slate-500">
-            vs yesterday
-          </span>
-        </div>
+    <div className="relative overflow-hidden rounded-[22px] border border-slate-100 bg-white px-6 py-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+      <div className="absolute right-5 top-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
+        <Icon size={28} strokeWidth={2.4} />
       </div>
 
-      <img
-        src={STAT_IMAGES[type]}
-        alt={title}
-        className="absolute bottom-5 right-5 h-24 w-24 object-contain drop-shadow-xl"
-      />
+      <div className="pr-16">
+        <p className="text-sm font-bold text-slate-500">{title}</p>
+
+        <h2 className="mt-2 text-[30px] font-black leading-none tracking-tight text-slate-900">
+          {value}
+        </h2>
+      </div>
     </div>
   );
 };
@@ -251,9 +232,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
   const targetPercent = Math.min((periodRevenue / target) * 100, 100);
 
   return (
-    <div className="min-h-screen bg-[#fafbff] px-1 pb-8">
-      <div className="space-y-7 animate-in fade-in duration-500">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="min-h-screen w-full bg-white px-6 py-6">
+      <div className="w-full space-y-7 bg-white animate-in fade-in duration-500">
+        <div className="flex flex-col gap-4 bg-white lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-slate-950">
               Enterprise Dashboard 👋
@@ -277,25 +258,22 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 bg-white md:grid-cols-3">
           <StatCard
             title={`${periodLabel} Revenue`}
             value={formatRupiah(periodRevenue)}
-            change={12.5}
             type="revenue"
           />
 
           <StatCard
             title={`${periodLabel} Transactions`}
             value={periodTransactions.toLocaleString('id-ID')}
-            change={8.2}
             type="transaction"
           />
 
           <StatCard
             title={`${periodLabel} Items Sold`}
             value={periodItems.toLocaleString('id-ID')}
-            change={-3.1}
             type="item"
           />
         </div>
@@ -438,9 +416,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
                 </div>
               </div>
 
-              <div className="absolute right-8 top-16 flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-[0_16px_35px_rgba(249,115,22,0.25)]">
-                <Target size={52} className="text-orange-600" />
-              </div>
+              
             </div>
           </div>
         </div>

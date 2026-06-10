@@ -515,8 +515,8 @@ const App: React.FC = () => {
     }} />;
   }
 
-  return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden text-slate-900">
+ return (
+  <div className="flex h-screen bg-white overflow-hidden text-slate-900">
       <aside className={`bg-white border-r border-slate-100 transition-all duration-300 z-50 ${isSidebarOpen ? 'w-64' : 'w-20'} flex flex-col`}>
         <div className="p-6 flex items-center justify-between">
           <div className={`flex items-center space-x-3 ${!isSidebarOpen && 'hidden'}`}>
@@ -569,7 +569,7 @@ const App: React.FC = () => {
           </div>
         </div>
       </aside>
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-8 shrink-0">
           <h2 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Enterprise Console</h2>
           <div className="flex items-center space-x-4">

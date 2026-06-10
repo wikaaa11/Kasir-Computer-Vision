@@ -1,6 +1,5 @@
-
-import React, { useEffect, useRef, useState } from 'react';
-import { User, ArrowRight, X, Loader2 } from 'lucide-react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { User, ArrowRight, X, Camera, AlertCircle } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
 interface MembershipPageProps {
@@ -10,20 +9,20 @@ interface MembershipPageProps {
   t: any;
 }
 
-const MembershipPage: React.FC<MembershipPageProps> = ({ onSkip, onDetected, isChecking = false, t }) => {
-  const [memberCode, setMemberCode] = React.useState('MEM-001');
+const MembershipPage: React.FC<MembershipPageProps> = ({
+  onSkip,
+  onDetected,
+  isChecking = false,
+  t,
+}) => {
+  const qrReaderId = useId().replace(/:/g, '');
+  const [memberCode, setMemberCode] = useState('MEM-001');
   const [scanError, setScanError] = useState<string | null>(null);
-  const scannerRef = useRef<Html5Qrcode | null>(null);
-  const scannerContainerRef = useRef<HTMLDivElement>(null);
+  const [isCameraStarting, setIsCameraStarting] = useState(true);
 
-  const handleCheckMember = () => {
-    const cleanCode = memberCode.trim();
-    if (!cleanCode) {
-      alert('Masukkan kode member terlebih dahulu.');
-      return;
-    }
-    onDetected(cleanCode);
-  };
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const hasDetectedRef = useRef(false);
+  const isScannerRunningRef = useRef(false);
 
   const extractMemberCode = (decodedText: string): string | null => {
     const trimmed = decodedText.trim();
@@ -31,34 +30,69 @@ const MembershipPage: React.FC<MembershipPageProps> = ({ onSkip, onDetected, isC
 
     try {
       const parsed = JSON.parse(trimmed);
+
       if (parsed && typeof parsed === 'object') {
-        return parsed.user_id || parsed.member_id || parsed.memberCode || parsed.code || null;
+        return (
+          parsed.user_id ||
+          parsed.member_id ||
+          parsed.memberCode ||
+          parsed.code ||
+          null
+        );
       }
     } catch {
       return trimmed;
     }
-    return null;
+
+    return trimmed;
   };
 
-  const onQrResult = (decodedText: string) => {
-    if (isChecking) return;
-    
-    const code = extractMemberCode(decodedText);
-    if (code) {
-      onDetected(code);
-      stopScanner();
+  const stopScanner = async () => {
+    const scanner = scannerRef.current;
+
+    if (!scanner) return;
+
+    try {
+      if (isScannerRunningRef.current) {
+        await scanner.stop();
+      }
+
+      scanner.clear();
+    } catch (err) {
+      console.error('Failed to stop scanner:', err);
+    } finally {
+      scannerRef.current = null;
+      isScannerRunningRef.current = false;
     }
   };
 
+  const onQrResult = async (decodedText: string) => {
+    if (isChecking || hasDetectedRef.current) return;
+
+    const code = extractMemberCode(decodedText);
+
+    if (!code) return;
+
+    hasDetectedRef.current = true;
+    await stopScanner();
+    onDetected(code);
+  };
+
   const startScanner = async () => {
-    if (isChecking || !scannerContainerRef.current) return;
+    if (isChecking || scannerRef.current) return;
+
+    const readerElement = document.getElementById(qrReaderId);
+    if (!readerElement) return;
 
     try {
       setScanError(null);
-      const html5QrCode = new Html5Qrcode(scannerContainerRef.current.id, {
+      setIsCameraStarting(true);
+      hasDetectedRef.current = false;
+
+      const html5QrCode = new Html5Qrcode(qrReaderId, {
         verbose: false,
       });
-      
+
       scannerRef.current = html5QrCode;
 
       await html5QrCode.start(
@@ -66,93 +100,131 @@ const MembershipPage: React.FC<MembershipPageProps> = ({ onSkip, onDetected, isC
         {
           fps: 10,
           qrbox: { width: 200, height: 200 },
+          aspectRatio: 1,
         },
         onQrResult,
-        (errorMessage) => {
-          if (!isChecking) {
-            console.debug('QR scan error:', errorMessage);
-          }
-        }
+        () => {}
       );
+
+      isScannerRunningRef.current = true;
+      setIsCameraStarting(false);
     } catch (err: any) {
       console.error('Failed to start scanner:', err);
-      setScanError(err?.message || 'Tidak dapat mengakses kamera. Pastikan izin kamera diizinkan.');
-    }
-  };
 
-  const stopScanner = async () => {
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.stop();
-        scannerRef.current.clear();
-      } catch (err) {
-        console.error('Failed to stop scanner:', err);
-      }
       scannerRef.current = null;
+      isScannerRunningRef.current = false;
+      setIsCameraStarting(false);
+
+      setScanError(
+        err?.message ||
+          'Tidak dapat mengakses kamera. Pastikan izin kamera diizinkan.'
+      );
     }
   };
 
-useEffect(() => {
-    if (!isChecking) {
-      startScanner();
+  const handleCheckMember = async () => {
+    const cleanCode = memberCode.trim();
+
+    if (!cleanCode) {
+      alert('Masukkan kode member terlebih dahulu.');
+      return;
     }
+
+    if (hasDetectedRef.current || isChecking) return;
+
+    hasDetectedRef.current = true;
+    await stopScanner();
+    onDetected(cleanCode);
+  };
+
+  const handleSkip = async () => {
+    await stopScanner();
+    onSkip();
+  };
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      startScanner();
+    }, 300);
+
     return () => {
+      window.clearTimeout(timer);
       stopScanner();
     };
   }, [isChecking]);
 
   return (
     <div className="fixed inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center p-4 md:p-6 overflow-hidden">
-      {/* Background Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] bg-[#F97316] rounded-full blur-[170px] opacity-10 pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(249,115,22,0.14),transparent_45%)] pointer-events-none" />
 
       <div className="w-full max-w-sm relative z-10 flex flex-col items-center px-3 md:px-4 py-3 rounded-[24px] border border-white/10 bg-slate-900/25 backdrop-blur-md">
         <div className="mb-3 md:mb-4 flex flex-col items-center">
           <div className="w-10 h-10 md:w-11 md:h-11 bg-white rounded-xl flex items-center justify-center vision-shadow overflow-hidden border border-slate-100 mb-1.5">
-            <img 
-              src="/logo.jpeg" 
-              alt="Ngolab Logo" 
+            <img
+              src="/logo.jpeg"
+              alt="Ngolab Logo"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
           </div>
-          <span className="text-[9px] md:text-[10px] font-black text-[#F97316] tracking-widest uppercase">{t.title}</span>
+
+          <span className="text-[9px] md:text-[10px] font-black text-[#F97316] tracking-widest uppercase">
+            {t.title}
+          </span>
         </div>
 
         <div className="mb-4 md:mb-5 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-600/15 rounded-full text-[#F97316] text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-2.5">
-            <User size={12} /> {t.check}
+            <User size={12} />
+            {t.check}
           </div>
-          <h2 className="text-[30px] md:text-[36px] leading-[1.05] font-black text-white mb-2">{t.scanCard}</h2>
-          <p className="text-sm md:text-[15px] text-slate-400 max-w-[520px]">{t.discountDesc}</p>
+
+          <h2 className="text-[30px] md:text-[36px] leading-[1.05] font-black text-white mb-2">
+            {t.scanCard}
+          </h2>
+
+          <p className="text-sm md:text-[15px] text-slate-400 max-w-[520px]">
+            {t.discountDesc}
+          </p>
         </div>
 
-{/* Scan Frame */}
         <div className="relative w-full aspect-square max-w-[230px] md:max-w-[260px] mb-4 md:mb-5">
           <div className="absolute inset-0 border-2 border-white/10 rounded-[28px] md:rounded-[40px]" />
+
           <div className="absolute top-0 left-0 w-9 h-9 md:w-10 md:h-10 border-t-4 border-l-4 border-[#F97316] rounded-tl-[20px] md:rounded-tl-[28px]" />
           <div className="absolute top-0 right-0 w-9 h-9 md:w-10 md:h-10 border-t-4 border-r-4 border-[#F97316] rounded-tr-[20px] md:rounded-tr-[28px]" />
           <div className="absolute bottom-0 left-0 w-9 h-9 md:w-10 md:h-10 border-b-4 border-l-4 border-[#F97316] rounded-bl-[20px] md:rounded-bl-[28px]" />
           <div className="absolute bottom-0 right-0 w-9 h-9 md:w-10 md:h-10 border-b-4 border-r-4 border-[#F97316] rounded-br-[20px] md:rounded-br-[28px]" />
-          
-          <div className="absolute inset-5 md:inset-7 flex items-center justify-center overflow-hidden rounded-[20px]">
-            {scanError ? (
-              <div className="text-center p-4">
-                <div className="text-red-400 text-xs font-bold mb-2">Error Kamera</div>
-                <div className="text-slate-400 text-[10px]">{scanError}</div>
+
+          <div className="absolute inset-5 md:inset-7 overflow-hidden rounded-[20px] bg-slate-950">
+            <div
+              id={qrReaderId}
+              className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover"
+            />
+
+            {isCameraStarting && !scanError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 text-slate-300">
+                <Camera size={28} className="mb-2 text-orange-400" />
+                <p className="text-xs font-bold">Membuka kamera...</p>
               </div>
-            ) : (
-              <div 
-                id="qr-reader" 
-                ref={scannerContainerRef}
-                className="w-full h-full"
-              />
+            )}
+
+            {scanError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 text-center p-4">
+                <AlertCircle size={28} className="text-red-400 mb-2" />
+                <div className="text-red-400 text-xs font-bold mb-2">
+                  Kamera tidak aktif
+                </div>
+                <div className="text-slate-400 text-[10px] leading-relaxed">
+                  {scanError}
+                </div>
+              </div>
             )}
           </div>
         </div>
 
-<div className="flex flex-col gap-2.5 w-full">
+        <div className="flex flex-col gap-2.5 w-full">
           <input
             type="text"
             value={memberCode}
@@ -166,17 +238,18 @@ useEffect(() => {
               }
             }}
           />
-          <button 
+
+          <button
             onClick={handleCheckMember}
             disabled={isChecking}
             className="w-full py-3.5 bg-[#F97316] hover:bg-[#EA580C] text-white rounded-[22px] md:rounded-[26px] font-black text-base md:text-[17px] transition-all vision-shadow active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
           >
-            {isChecking ? t.check + '...' : t.simulateScan}
+            {isChecking ? `${t.check}...` : t.simulateScan}
             {!isChecking && <ArrowRight size={20} />}
           </button>
 
-          <button 
-            onClick={onSkip}
+          <button
+            onClick={handleSkip}
             disabled={isChecking}
             className="w-full py-3.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-[22px] md:rounded-[26px] font-bold text-sm md:text-[15px] transition-all flex items-center justify-center gap-2 disabled:opacity-30"
           >
