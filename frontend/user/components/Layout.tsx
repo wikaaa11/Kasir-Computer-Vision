@@ -1,5 +1,4 @@
 import React from 'react';
-import { Globe, User, ChevronDown } from 'lucide-react';
 import { Language } from '../types';
 
 interface LayoutProps {
@@ -13,8 +12,6 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({
   children,
   hideHeaderFooter = false,
-  lang,
-  onLangChange,
   t,
 }) => {
   if (hideHeaderFooter) {
@@ -51,21 +48,6 @@ const Layout: React.FC<LayoutProps> = ({
                 Computer-Vision
               </p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => onLangChange(lang === 'id' ? 'en' : 'id')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all text-xs font-semibold"
-            >
-              <Globe size={13} />
-              {lang === 'id' ? 'Indonesia' : 'English'}
-              <ChevronDown size={12} className="text-slate-400" />
-            </button>
-
-            <button className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-all">
-              <User size={16} />
-            </button>
           </div>
         </div>
       </header>

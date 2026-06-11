@@ -3,7 +3,6 @@ import {
   RefreshCw,
   Radio,
   ExternalLink,
-  Target,
   TrendingUp,
   ReceiptText,
   PackageCheck,
@@ -22,7 +21,7 @@ interface DashboardProps {
   transactions: any[];
 }
 
-type Period = 'today' | 'week' | 'month';
+type Period = 'today' | 'week' | 'month' | 'year';
 type StatType = 'revenue' | 'transaction' | 'item';
 
 const STAT_ICONS: Record<StatType, React.ElementType> = {
@@ -73,6 +72,9 @@ const isSameMonth = (date: Date, target: Date) =>
   date.getFullYear() === target.getFullYear() &&
   date.getMonth() === target.getMonth();
 
+const isSameYear = (date: Date, target: Date) =>
+  date.getFullYear() === target.getFullYear();
+
 const StatCard = ({
   title,
   value,
@@ -109,6 +111,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
     today: 'Today',
     week: 'This Week',
     month: 'This Month',
+    year: 'This Year',
   }[period];
 
   const filteredTransactions = useMemo(() => {
@@ -120,7 +123,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
 
       if (period === 'today') return isSameDay(date, now);
       if (period === 'week') return isSameWeek(date, now);
-      return isSameMonth(date, now);
+      if (period === 'month') return isSameMonth(date, now);
+      return isSameYear(date, now);
     });
   }, [transactions, period]);
 
@@ -158,7 +162,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
 
         const revenue = filteredTransactions.reduce((sum, tx) => {
           const date = new Date(getTransactionTimestamp(tx));
-          return date.getHours() >= hourNumber && date.getHours() < hourNumber + 2
+
+          return date.getHours() >= hourNumber &&
+            date.getHours() < hourNumber + 2
             ? sum + (Number(tx.total) || 0)
             : sum;
         }, 0);
@@ -182,23 +188,53 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
       });
     }
 
-    const daysInMonth = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      0
-    ).getDate();
+    if (period === 'month') {
+      const daysInMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0
+      ).getDate();
 
-    return Array.from({ length: daysInMonth }, (_, index) => {
-      const day = index + 1;
+      return Array.from({ length: daysInMonth }, (_, index) => {
+        const day = index + 1;
 
+        const revenue = filteredTransactions.reduce((sum, tx) => {
+          const date = new Date(getTransactionTimestamp(tx));
+          return date.getDate() === day ? sum + (Number(tx.total) || 0) : sum;
+        }, 0);
+
+        return { name: String(day), revenue };
+      });
+    }
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+
+    return months.map((month, index) => {
       const revenue = filteredTransactions.reduce((sum, tx) => {
         const date = new Date(getTransactionTimestamp(tx));
-        return date.getDate() === day ? sum + (Number(tx.total) || 0) : sum;
+        return date.getMonth() === index ? sum + (Number(tx.total) || 0) : sum;
       }, 0);
 
-      return { name: String(day), revenue };
+      return { name: month, revenue };
     });
   }, [filteredTransactions, period]);
+
+  const maxRevenue = Math.max(...chartData.map((item) => item.revenue), 0);
+  const yAxisMax =
+    maxRevenue <= 0 ? 1000 : Math.ceil((maxRevenue * 1.25) / 4000) * 4000;
 
   const formatItemLabel = (item: any) => {
     const itemName =
@@ -228,7 +264,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
     );
   };
 
-  const target = 10000000;
+  const target = period === 'year' ? 120000000 : 10000000;
   const targetPercent = Math.min((periodRevenue / target) * 100, 100);
 
   return (
@@ -286,48 +322,35 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
             </h3>
           </div>
 
-          <div className="mb-6 inline-flex overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <button
-              type="button"
-              onClick={() => setPeriod('today')}
-              className={`px-5 py-2 text-xs font-black transition ${
-                period === 'today'
-                  ? 'bg-orange-50 text-orange-600'
-                  : 'text-slate-500 hover:bg-slate-50'
-              }`}
-            >
-              Today
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setPeriod('week')}
-              className={`border-l border-slate-200 px-5 py-2 text-xs font-black transition ${
-                period === 'week'
-                  ? 'bg-orange-50 text-orange-600'
-                  : 'text-slate-500 hover:bg-slate-50'
-              }`}
-            >
-              This Week
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setPeriod('month')}
-              className={`border-l border-slate-200 px-5 py-2 text-xs font-black transition ${
-                period === 'month'
-                  ? 'bg-orange-50 text-orange-600'
-                  : 'text-slate-500 hover:bg-slate-50'
-              }`}
-            >
-              This Month
-            </button>
+          <div className="mb-8 inline-flex overflow-hidden rounded-xl border border-slate-200 bg-white">
+            {[
+              { key: 'today', label: 'Today' },
+              { key: 'week', label: 'This Week' },
+              { key: 'month', label: 'This Month' },
+              { key: 'year', label: 'This Year' },
+            ].map((item, index) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setPeriod(item.key as Period)}
+                className={`${index !== 0 ? 'border-l border-slate-200' : ''} px-5 py-2 text-xs font-black transition ${
+                  period === item.key
+                    ? 'bg-orange-50 text-orange-600'
+                    : 'text-slate-500 hover:bg-slate-50'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
-            <div className="h-[280px] w-full">
+            <div className="h-[330px] w-full pt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
+                <LineChart
+                  data={chartData}
+                  margin={{ top: 36, right: 28, left: 10, bottom: 8 }}
+                >
                   <CartesianGrid
                     strokeDasharray="4 4"
                     vertical={false}
@@ -339,9 +362,11 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }}
+                    dy={8}
                   />
 
                   <YAxis
+                    domain={[0, yAxisMax]}
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }}
@@ -415,8 +440,6 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions = [] }) => {
                   </div>
                 </div>
               </div>
-
-              
             </div>
           </div>
         </div>

@@ -8,8 +8,6 @@ import {
   Wallet,
   ShoppingCart,
   PackageOpen,
-  Filter,
-  ChevronDown,
 } from 'lucide-react';
 import { generateReportPDF } from '../lib/pdfService';
 
@@ -25,7 +23,6 @@ const Transactions: React.FC<TransactionsProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('all');
 
   const getCvItems = (transaction: any) => {
     if (!Array.isArray(transaction.items)) return [];
@@ -94,7 +91,6 @@ const Transactions: React.FC<TransactionsProps> = ({
   const filteredTransactions = sortedTransactions.filter((t) => {
     const id = (t.id_transaksi || t.id || '').toString().toLowerCase();
     const name = getItemsSummary(t).toString().toLowerCase();
-    const method = String(t.metode_bayar || t.payment_method || 'QRIS').toLowerCase();
     const query = searchQuery.toLowerCase();
 
     const dateVal = t.tanggal || t.time || t.date || t.created_at;
@@ -118,14 +114,7 @@ const Transactions: React.FC<TransactionsProps> = ({
       matchesDate = false;
     }
 
-    const matchesPayment =
-      paymentMethod === 'all' || method === paymentMethod.toLowerCase();
-
-    return (
-      (id.includes(query) || name.includes(query)) &&
-      matchesDate &&
-      matchesPayment
-    );
+    return (id.includes(query) || name.includes(query)) && matchesDate;
   });
 
   const displayRows = filteredTransactions.flatMap((transaction) =>
@@ -175,13 +164,6 @@ const Transactions: React.FC<TransactionsProps> = ({
     } catch {
       return '';
     }
-  };
-
-  const resetFilter = () => {
-    setSearchQuery('');
-    setStartDate('');
-    setEndDate('');
-    setPaymentMethod('all');
   };
 
   const handleExportPDF = () => {
@@ -261,15 +243,13 @@ const Transactions: React.FC<TransactionsProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={handleExportPDF}
-              className="flex h-10 items-center gap-2 rounded-xl bg-orange-600 px-4 text-xs font-black text-white shadow-[0_10px_22px_rgba(234,88,12,0.22)] transition hover:bg-orange-700"
-            >
-              <FileText size={16} />
-              Export PDF
-            </button>
-          </div>
+          <button
+            onClick={handleExportPDF}
+            className="flex h-10 items-center gap-2 rounded-xl bg-orange-600 px-4 text-xs font-black text-white shadow-[0_10px_22px_rgba(234,88,12,0.22)] transition hover:bg-orange-700"
+          >
+            <FileText size={16} />
+            Export PDF
+          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -319,7 +299,7 @@ const Transactions: React.FC<TransactionsProps> = ({
 
         <div className="overflow-hidden rounded-[20px] border border-slate-100 bg-white shadow-[0_10px_26px_rgba(15,23,42,0.05)]">
           <div className="border-b border-slate-100 p-4">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
               <div className="relative w-full xl:max-w-[340px]">
                 <Search
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
@@ -335,31 +315,33 @@ const Transactions: React.FC<TransactionsProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-2.5 md:grid-cols-4">
-                <div className="relative">
-                  <span className="absolute -top-2 left-3 bg-white px-1 text-[9px] font-black uppercase text-slate-500">
-                    Dari
-                  </span>
+              <div className="ml-auto flex w-full justify-end xl:w-auto">
+                <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                  <div className="relative">
+                    <span className="absolute -top-2 left-3 bg-white px-1 text-[9px] font-black uppercase text-slate-500">
+                      Dari
+                    </span>
 
-                  <input
-                    type="date"
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition focus:border-orange-300 focus:ring-4 focus:ring-orange-50"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                </div>
+                    <input
+                      type="date"
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition focus:border-orange-300 focus:ring-4 focus:ring-orange-50 md:w-[180px]"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </div>
 
-                <div className="relative">
-                  <span className="absolute -top-2 left-3 bg-white px-1 text-[9px] font-black uppercase text-slate-500">
-                    Sampai
-                  </span>
+                  <div className="relative">
+                    <span className="absolute -top-2 left-3 bg-white px-1 text-[9px] font-black uppercase text-slate-500">
+                      Sampai
+                    </span>
 
-                  <input
-                    type="date"
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition focus:border-orange-300 focus:ring-4 focus:ring-orange-50"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
+                    <input
+                      type="date"
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition focus:border-orange-300 focus:ring-4 focus:ring-orange-50 md:w-[180px]"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -394,10 +376,14 @@ const Transactions: React.FC<TransactionsProps> = ({
                     : getItemsSummary(t);
 
                   const payMethod = t.metode_bayar || t.payment_method || 'QRIS';
+
                   const itemPrice = item
                     ? Number(item.price_snapshot ?? item.price ?? 0)
                     : Number(t.harga || 0);
-                  const itemQty = item ? Number(item.qty || 1) : Number(t.qty || 1);
+
+                  const itemQty = item
+                    ? Number(item.qty || 1)
+                    : Number(t.qty || 1);
 
                   return (
                     <tr

@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { User, ArrowRight, X, Camera, AlertCircle } from 'lucide-react';
+import { User, X, Camera, AlertCircle, ScanLine } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
 interface MembershipPageProps {
@@ -16,7 +16,6 @@ const MembershipPage: React.FC<MembershipPageProps> = ({
   t,
 }) => {
   const qrReaderId = useId().replace(/:/g, '');
-  const [memberCode, setMemberCode] = useState('MEM-001');
   const [scanError, setScanError] = useState<string | null>(null);
   const [isCameraStarting, setIsCameraStarting] = useState(true);
 
@@ -49,7 +48,6 @@ const MembershipPage: React.FC<MembershipPageProps> = ({
 
   const stopScanner = async () => {
     const scanner = scannerRef.current;
-
     if (!scanner) return;
 
     try {
@@ -70,7 +68,6 @@ const MembershipPage: React.FC<MembershipPageProps> = ({
     if (isChecking || hasDetectedRef.current) return;
 
     const code = extractMemberCode(decodedText);
-
     if (!code) return;
 
     hasDetectedRef.current = true;
@@ -99,7 +96,7 @@ const MembershipPage: React.FC<MembershipPageProps> = ({
         { facingMode: 'environment' },
         {
           fps: 10,
-          qrbox: { width: 200, height: 200 },
+          qrbox: { width: 180, height: 180 },
           aspectRatio: 1,
         },
         onQrResult,
@@ -122,21 +119,6 @@ const MembershipPage: React.FC<MembershipPageProps> = ({
     }
   };
 
-  const handleCheckMember = async () => {
-    const cleanCode = memberCode.trim();
-
-    if (!cleanCode) {
-      alert('Masukkan kode member terlebih dahulu.');
-      return;
-    }
-
-    if (hasDetectedRef.current || isChecking) return;
-
-    hasDetectedRef.current = true;
-    await stopScanner();
-    onDetected(cleanCode);
-  };
-
   const handleSkip = async () => {
     await stopScanner();
     onSkip();
@@ -154,69 +136,69 @@ const MembershipPage: React.FC<MembershipPageProps> = ({
   }, [isChecking]);
 
   return (
-    <div className="fixed inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center p-4 md:p-6 overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] bg-[#F97316] rounded-full blur-[170px] opacity-10 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(249,115,22,0.14),transparent_45%)] pointer-events-none" />
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-slate-900 p-3 md:p-4">
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F97316] opacity-10 blur-[150px]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(249,115,22,0.14),transparent_45%)]" />
 
-      <div className="w-full max-w-sm relative z-10 flex flex-col items-center px-3 md:px-4 py-3 rounded-[24px] border border-white/10 bg-slate-900/25 backdrop-blur-md">
-        <div className="mb-3 md:mb-4 flex flex-col items-center">
-          <div className="w-10 h-10 md:w-11 md:h-11 bg-white rounded-xl flex items-center justify-center vision-shadow overflow-hidden border border-slate-100 mb-1.5">
+      <div className="relative z-10 flex w-full max-w-[340px] flex-col items-center rounded-[22px] border border-white/10 bg-slate-900/25 px-3 py-3 backdrop-blur-md">
+        <div className="mb-2.5 flex flex-col items-center">
+          <div className="vision-shadow mb-1.5 flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-white">
             <img
               src="/logo.jpeg"
               alt="Ngolab Logo"
-              className="w-full h-full object-cover"
+              className="h-full w-full object-cover"
               referrerPolicy="no-referrer"
             />
           </div>
 
-          <span className="text-[9px] md:text-[10px] font-black text-[#F97316] tracking-widest uppercase">
+          <span className="text-[8px] font-black uppercase tracking-widest text-[#F97316]">
             {t.title}
           </span>
         </div>
 
-        <div className="mb-4 md:mb-5 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-600/15 rounded-full text-[#F97316] text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-2.5">
-            <User size={12} />
+        <div className="mb-3 text-center">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-orange-600/15 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-[#F97316]">
+            <User size={11} />
             {t.check}
           </div>
 
-          <h2 className="text-[30px] md:text-[36px] leading-[1.05] font-black text-white mb-2">
+          <h2 className="mb-1.5 text-[26px] font-black leading-[1.05] text-white">
             {t.scanCard}
           </h2>
 
-          <p className="text-sm md:text-[15px] text-slate-400 max-w-[520px]">
-            {t.discountDesc}
+          <p className="text-xs text-slate-400">
+            Arahkan QR/barcode membership ke kamera.
           </p>
         </div>
 
-        <div className="relative w-full aspect-square max-w-[230px] md:max-w-[260px] mb-4 md:mb-5">
-          <div className="absolute inset-0 border-2 border-white/10 rounded-[28px] md:rounded-[40px]" />
+        <div className="relative mb-3 aspect-square w-full max-w-[205px]">
+          <div className="absolute inset-0 rounded-[26px] border-2 border-white/10" />
 
-          <div className="absolute top-0 left-0 w-9 h-9 md:w-10 md:h-10 border-t-4 border-l-4 border-[#F97316] rounded-tl-[20px] md:rounded-tl-[28px]" />
-          <div className="absolute top-0 right-0 w-9 h-9 md:w-10 md:h-10 border-t-4 border-r-4 border-[#F97316] rounded-tr-[20px] md:rounded-tr-[28px]" />
-          <div className="absolute bottom-0 left-0 w-9 h-9 md:w-10 md:h-10 border-b-4 border-l-4 border-[#F97316] rounded-bl-[20px] md:rounded-bl-[28px]" />
-          <div className="absolute bottom-0 right-0 w-9 h-9 md:w-10 md:h-10 border-b-4 border-r-4 border-[#F97316] rounded-br-[20px] md:rounded-br-[28px]" />
+          <div className="absolute left-0 top-0 h-8 w-8 rounded-tl-[18px] border-l-4 border-t-4 border-[#F97316]" />
+          <div className="absolute right-0 top-0 h-8 w-8 rounded-tr-[18px] border-r-4 border-t-4 border-[#F97316]" />
+          <div className="absolute bottom-0 left-0 h-8 w-8 rounded-bl-[18px] border-b-4 border-l-4 border-[#F97316]" />
+          <div className="absolute bottom-0 right-0 h-8 w-8 rounded-br-[18px] border-b-4 border-r-4 border-[#F97316]" />
 
-          <div className="absolute inset-5 md:inset-7 overflow-hidden rounded-[20px] bg-slate-950">
+          <div className="absolute inset-4 overflow-hidden rounded-[18px] bg-slate-950">
             <div
               id={qrReaderId}
-              className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover"
+              className="h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-cover"
             />
 
             {isCameraStarting && !scanError && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 text-slate-300">
-                <Camera size={28} className="mb-2 text-orange-400" />
-                <p className="text-xs font-bold">Membuka kamera...</p>
+                <Camera size={24} className="mb-2 text-orange-400" />
+                <p className="text-[11px] font-bold">Membuka kamera...</p>
               </div>
             )}
 
             {scanError && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 text-center p-4">
-                <AlertCircle size={28} className="text-red-400 mb-2" />
-                <div className="text-red-400 text-xs font-bold mb-2">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 p-3 text-center">
+                <AlertCircle size={24} className="mb-2 text-red-400" />
+                <div className="mb-1.5 text-[11px] font-bold text-red-400">
                   Kamera tidak aktif
                 </div>
-                <div className="text-slate-400 text-[10px] leading-relaxed">
+                <div className="text-[9px] leading-relaxed text-slate-400">
                   {scanError}
                 </div>
               </div>
@@ -224,39 +206,35 @@ const MembershipPage: React.FC<MembershipPageProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-col gap-2.5 w-full">
-          <input
-            type="text"
-            value={memberCode}
-            onChange={(e) => setMemberCode(e.target.value)}
-            placeholder="Masukkan kode member..."
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-[22px] text-white text-center font-bold text-sm placeholder-slate-500 focus:outline-none focus:border-[#F97316]/50"
-            disabled={isChecking}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !isChecking) {
-                handleCheckMember();
-              }
-            }}
-          />
+        <div className="mb-3 w-full rounded-[20px] border border-orange-500/20 bg-orange-500/10 p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <ScanLine size={15} className="text-[#F97316]" />
+            <p className="text-[11px] font-black uppercase tracking-widest text-white">
+              Langkah Scan
+            </p>
+          </div>
 
-          <button
-            onClick={handleCheckMember}
-            disabled={isChecking}
-            className="w-full py-3.5 bg-[#F97316] hover:bg-[#EA580C] text-white rounded-[22px] md:rounded-[26px] font-black text-base md:text-[17px] transition-all vision-shadow active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
-          >
-            {isChecking ? `${t.check}...` : t.simulateScan}
-            {!isChecking && <ArrowRight size={20} />}
-          </button>
-
-          <button
-            onClick={handleSkip}
-            disabled={isChecking}
-            className="w-full py-3.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-[22px] md:rounded-[26px] font-bold text-sm md:text-[15px] transition-all flex items-center justify-center gap-2 disabled:opacity-30"
-          >
-            <X size={18} />
-            {t.noMember}
-          </button>
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-medium leading-relaxed text-slate-300">
+              1. Buka QR/barcode membership pelanggan.
+            </p>
+            <p className="text-[11px] font-medium leading-relaxed text-slate-300">
+              2. Arahkan kode ke area kotak scan.
+            </p>
+            <p className="text-[11px] font-medium leading-relaxed text-slate-300">
+              3. Tunggu sampai kode terbaca otomatis.
+            </p>
+          </div>
         </div>
+
+        <button
+          onClick={handleSkip}
+          disabled={isChecking}
+          className="flex w-full items-center justify-center gap-2 rounded-[20px] bg-white/5 py-3 text-xs font-bold text-slate-400 transition-all hover:bg-white/10 disabled:opacity-30"
+        >
+          <X size={16} />
+          {t.noMember}
+        </button>
       </div>
     </div>
   );
