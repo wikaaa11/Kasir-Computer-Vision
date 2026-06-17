@@ -679,7 +679,7 @@ const App: React.FC = () => {
             </div>
 
             <span className="font-bold text-lg tracking-tight">
-              Vision<span className="text-orange-600">Admin</span>
+              CV<span className="text-orange-600">Admin</span>
             </span>
           </div>
 
