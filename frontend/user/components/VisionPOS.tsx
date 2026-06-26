@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { Camera, ShoppingCart, Trash2, CreditCard, Loader2, BrainCircuit, Scan, ShieldCheck, AlertCircle, RefreshCw, Package, Sparkles, ArrowLeft } from 'lucide-react';
 import { CartItem } from '../types';

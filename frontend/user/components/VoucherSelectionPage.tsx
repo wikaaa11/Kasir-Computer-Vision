@@ -13,11 +13,21 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Voucher, CartItem } from '../types';
-import { getCvActiveVouchers } from '../src/cvApiService';
+import { getCvMemberVouchers } from '../src/cvApiService';
 
 interface VoucherSelectionPageProps {
   isMember: boolean;
-  memberData: { id: string; name: string; tier: string; points: number } | null;
+  memberData:
+    | {
+        id?: string | number;
+        user_id?: string | number;
+        code?: string | number;
+        member_code?: string | number;
+        name: string;
+        tier: string;
+        points: number;
+      }
+    | null;
   selectedVoucherId?: string;
   pointsUsed: number;
   onSelectPoints: (points: number) => void;
@@ -56,6 +66,19 @@ const getTierStyles = (tier: string = 'Silver'): TierVisual => {
   }
 };
 
+const toNumber = (value: unknown): number => {
+  if (value === undefined || value === null || value === '') return 0;
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  const cleaned = String(value).replace(/[^0-9.-]/g, '');
+  const numeric = Number(cleaned);
+
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
 const VoucherSelectionPage: React.FC<VoucherSelectionPageProps> = ({
   isMember,
   memberData,
@@ -69,41 +92,6 @@ const VoucherSelectionPage: React.FC<VoucherSelectionPageProps> = ({
 }) => {
   const [availableVouchers, setAvailableVouchers] = useState<Voucher[]>([]);
   const [isLoadingVouchers, setIsLoadingVouchers] = useState<boolean>(true);
-
-  useEffect(() => {
-    const loadVouchers = async () => {
-      setIsLoadingVouchers(true);
-
-      try {
-        const rawVouchers = await getCvActiveVouchers();
-
-        const mapped: Voucher[] = rawVouchers.map((voucher) => ({
-          id: String(voucher.voucher_code || ''),
-          title: String(voucher.voucher_name || 'Voucher'),
-          description: String(
-            voucher.description || 'Promo aktif untuk transaksi Anda.'
-          ),
-          discountType:
-            String(voucher.discount_type || 'FIXED').toUpperCase() ===
-            'PERCENT'
-              ? 'PERCENT'
-              : 'FIXED',
-          value: Number(voucher.discount_value || 0),
-          minTransaction: Number(voucher.min_transaction || 0),
-          isMemberOnly: Boolean(voucher.is_member_only),
-        }));
-
-        setAvailableVouchers(mapped);
-      } catch (error) {
-        console.error('Load vouchers failed:', error);
-        setAvailableVouchers([]);
-      } finally {
-        setIsLoadingVouchers(false);
-      }
-    };
-
-    loadVouchers();
-  }, []);
 
   const subtotal = useMemo(
     () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -122,8 +110,146 @@ const VoucherSelectionPage: React.FC<VoucherSelectionPageProps> = ({
   const maxRedeemable = useMemo(() => {
     if (!memberData) return 0;
 
-    return Math.max(0, Number(memberData.points || 0));
+    const memberPoints = Number(memberData.points || 0);
+
+    if (memberPoints <= 0) return 0;
+
+    return Math.min(memberPoints, subtotal);
+  }, [memberData, subtotal]);
+
+  const memberUserId = useMemo(() => {
+    if (!memberData) return '';
+
+    return String(
+      memberData.user_id ||
+        memberData.id ||
+        memberData.code ||
+        memberData.member_code ||
+        ''
+    ).trim();
   }, [memberData]);
+
+  useEffect(() => {
+    const loadVouchers = async () => {
+      setIsLoadingVouchers(true);
+
+      try {
+        if (!isMember || !memberUserId) {
+          setAvailableVouchers([]);
+          return;
+        }
+
+        const rawVouchers = await getCvMemberVouchers(memberUserId);
+
+        const mapped: Voucher[] = rawVouchers.map((voucher: any) => {
+          const discountTypeRaw = String(
+            voucher.discountType ||
+              voucher.discount_type ||
+              voucher.type ||
+              voucher.voucher_type ||
+              'FIXED'
+          ).toUpperCase();
+
+          const discountType =
+            discountTypeRaw === 'PERCENT' ||
+            discountTypeRaw === 'PERCENTAGE' ||
+            discountTypeRaw === 'DISCOUNT'
+              ? 'PERCENT'
+              : 'FIXED';
+
+          const voucherCode = String(
+            voucher.voucher_code ||
+              voucher.voucherCode ||
+              voucher.code ||
+              ''
+          ).trim();
+
+          const userVoucherId = String(
+            voucher.userVoucherId ||
+              voucher.user_voucher_id ||
+              voucher.id ||
+              ''
+          ).trim();
+
+          const voucherId = String(
+            userVoucherId ||
+              voucher.voucher_id ||
+              voucher.voucherId ||
+              voucherCode
+          ).trim();
+
+          const voucherTitle = String(
+            voucher.title ||
+              voucher.name ||
+              voucher.voucher_name ||
+              voucher.voucherName ||
+              'Voucher'
+          );
+
+          const discountValue = toNumber(
+            voucher.discountValue ||
+              voucher.discount_value ||
+              voucher.discount ||
+              voucher.value_amount ||
+              voucher.value ||
+              0
+          );
+
+          const minTransaction = toNumber(
+            voucher.minTransaction ||
+              voucher.min_transaction ||
+              voucher.minPurchase ||
+              voucher.min_purchase ||
+              voucher.minimum_purchase ||
+              0
+          );
+
+          const maxDiscount = toNumber(
+            voucher.maxDiscount ||
+              voucher.max_discount ||
+              voucher.maximum_discount ||
+              0
+          );
+
+          return {
+            id: voucherId,
+            title: voucherTitle,
+            description: String(
+              voucher.description || 'Voucher tersedia untuk transaksi Anda.'
+            ),
+            discountType,
+            value: discountValue,
+            minTransaction,
+            maxDiscount,
+            isMemberOnly: true,
+
+            voucher_code: voucherCode,
+            code: voucherCode,
+
+            voucher_id: voucher.voucher_id || voucher.voucherId || '',
+            userVoucherId,
+            user_voucher_id: userVoucherId,
+
+            expiredAt: voucher.expiredAt || voucher.expired_at || null,
+            expired_at: voucher.expiredAt || voucher.expired_at || null,
+
+            image_url: voucher.image_url || voucher.image || null,
+            image: voucher.image || voucher.image_url || null,
+            status: voucher.status || 'ACTIVE',
+          } as Voucher;
+        });
+
+        setAvailableVouchers(mapped);
+      } catch (error) {
+        console.error('Load vouchers failed:', error);
+        setAvailableVouchers([]);
+      } finally {
+        setIsLoadingVouchers(false);
+      }
+    };
+
+    loadVouchers();
+  }, [isMember, memberUserId]);
 
   const handleTogglePoints = () => {
     if (pointsUsed > 0) {
@@ -196,7 +322,7 @@ const VoucherSelectionPage: React.FC<VoucherSelectionPageProps> = ({
                         {memberData.name}
                       </h3>
                       <p className="text-[8px] md:text-[10px] font-mono opacity-50 tracking-widest">
-                        {memberData.id}
+                        {memberUserId || '-'}
                       </p>
                     </div>
                   </div>
@@ -209,7 +335,7 @@ const VoucherSelectionPage: React.FC<VoucherSelectionPageProps> = ({
                         {t.pointBalance}
                       </p>
                       <p className="text-xl md:text-2xl font-black text-slate-900">
-                        {memberData.points.toLocaleString('id-ID')}{' '}
+                        {Number(memberData.points || 0).toLocaleString('id-ID')}{' '}
                         <span className="text-[9px] md:text-[10px] text-slate-400">
                           {t.pts}
                         </span>
@@ -312,100 +438,150 @@ const VoucherSelectionPage: React.FC<VoucherSelectionPageProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
-              {availableVouchers.map((voucher) => {
-                const isDisabled = voucher.isMemberOnly && !isMember;
-                const isSelected = selectedVoucherId === voucher.id;
+            {isLoadingVouchers ? (
+              <div className="bg-white border border-slate-100 rounded-3xl p-8 text-center text-slate-400 font-bold">
+                Memuat voucher member...
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+                {availableVouchers.map((voucher) => {
+                  const voucherAny = voucher as any;
 
-                return (
-                  <button
-                    key={voucher.id}
-                    disabled={isDisabled}
-                    onClick={() => onSelect(isSelected ? null : voucher)}
-                    className={`group text-left rounded-[32px] md:rounded-[40px] transition-all flex flex-col h-full overflow-hidden border-2 relative
-                      ${
-                        isDisabled
-                          ? 'bg-white border-slate-100 opacity-60 cursor-not-allowed'
-                          : 'bg-white border-slate-100 shadow-lg shadow-slate-200/50 active:scale-[0.98]'
-                      }
-                      ${
-                        isSelected
-                          ? 'grayscale opacity-50 border-orange-200 scale-[0.99]'
-                          : 'hover:border-orange-500'
-                      }
-                    `}
-                  >
-                    {isSelected && (
-                      <div className="absolute inset-0 bg-white/10 z-10 flex items-center justify-center">
-                        <div className="bg-slate-900 text-white px-4 md:px-6 py-1.5 md:py-2 rounded-full font-black text-[8px] md:text-[10px] uppercase tracking-widest flex items-center gap-1.5 md:gap-2 shadow-2xl scale-110">
-                          <Check size={13} className="text-orange-400" />
-                          {t.voucherAttached}
-                        </div>
-                      </div>
-                    )}
+                  const isBelowMinTransaction =
+                    subtotal < Number(voucherAny.minTransaction || 0);
 
-                    <div
-                      className={`px-6 md:px-8 py-4 md:py-5 flex items-center justify-between transition-colors ${
-                        isSelected
-                          ? 'bg-slate-400 text-white'
-                          : voucher.isMemberOnly
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-slate-900 text-white'
-                      }`}
+                  const isDisabled =
+                    (voucherAny.isMemberOnly && !isMember) ||
+                    isBelowMinTransaction;
+
+                  const isSelected =
+                    selectedVoucherId === voucher.id ||
+                    selectedVoucherId === voucherAny.voucher_code ||
+                    selectedVoucherId === voucherAny.code;
+
+                  return (
+                    <button
+                      key={voucher.id}
+                      disabled={isDisabled}
+                      onClick={() => onSelect(isSelected ? null : voucher)}
+                      className={`group text-left rounded-[32px] md:rounded-[40px] transition-all flex flex-col h-full overflow-hidden border-2 relative
+                        ${
+                          isDisabled
+                            ? 'bg-white border-slate-100 opacity-60 cursor-not-allowed grayscale'
+                            : 'bg-white border-slate-100 shadow-lg shadow-slate-200/50 active:scale-[0.98]'
+                        }
+                        ${
+                          isSelected
+                            ? 'grayscale opacity-50 border-orange-200 scale-[0.99]'
+                            : 'hover:border-orange-500'
+                        }
+                      `}
                     >
-                      <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 md:gap-2">
-                        <Ticket size={11} />
-                        {voucher.isMemberOnly ? t.memberReward : t.publicPromo}
-                      </span>
-                    </div>
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-white/10 z-10 flex items-center justify-center">
+                          <div className="bg-slate-900 text-white px-4 md:px-6 py-1.5 md:py-2 rounded-full font-black text-[8px] md:text-[10px] uppercase tracking-widest flex items-center gap-1.5 md:gap-2 shadow-2xl scale-110">
+                            <Check size={13} className="text-orange-400" />
+                            {t.voucherAttached}
+                          </div>
+                        </div>
+                      )}
 
-                    <div className="p-6 md:p-8 flex-1 flex flex-col">
-                      <div className="text-3xl md:text-5xl font-black text-slate-900 mb-2 md:mb-3 tracking-tighter">
-                        {voucher.discountType === 'PERCENT'
-                          ? `${voucher.value}%`
-                          : `Rp ${voucher.value / 1000}k`}{' '}
-                        <span className="text-base md:text-xl uppercase text-slate-300">
-                          {t.off}
+                      <div
+                        className={`px-6 md:px-8 py-4 md:py-5 flex items-center justify-between transition-colors ${
+                          isSelected
+                            ? 'bg-slate-400 text-white'
+                            : voucherAny.isMemberOnly
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-slate-900 text-white'
+                        }`}
+                      >
+                        <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 md:gap-2">
+                          <Ticket size={11} />
+                          {voucherAny.isMemberOnly ? t.memberReward : t.publicPromo}
                         </span>
                       </div>
 
-                      <h5 className="font-black text-slate-900 text-sm md:text-base uppercase mb-1 md:mb-2">
-                        {voucher.title}
-                      </h5>
-
-                      <p className="text-xs md:text-sm text-slate-400 font-medium leading-relaxed mb-4 md:mb-6">
-                        {voucher.description}
-                      </p>
-
-                      <div
-                        className={`mt-auto pt-3 md:pt-4 border-t border-slate-50 flex items-center font-bold text-[10px] md:text-xs uppercase tracking-widest transition-opacity
-                        ${
-                          isSelected
-                            ? 'text-red-500 opacity-100'
-                            : 'text-orange-500 opacity-0 group-hover:opacity-100'
-                        }
-                      `}
-                      >
-                        {isSelected ? (
-                          <span className="flex items-center gap-1.5 md:gap-2">
-                            <XCircle size={13} />
-                            {t.cancelVoucher}
+                      <div className="p-6 md:p-8 flex-1 flex flex-col">
+                        <div className="text-3xl md:text-5xl font-black text-slate-900 mb-2 md:mb-3 tracking-tighter">
+                          {voucherAny.discountType === 'PERCENT'
+                            ? `${voucherAny.value}%`
+                            : `Rp ${Number(voucherAny.value || 0).toLocaleString(
+                                'id-ID'
+                              )}`}{' '}
+                          <span className="text-base md:text-xl uppercase text-slate-300">
+                            {t.off}
                           </span>
-                        ) : (
-                          t.useVoucher
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+                        </div>
 
-              {!isLoadingVouchers && availableVouchers.length === 0 && (
-                <div className="col-span-full bg-white border border-slate-100 rounded-3xl p-8 text-center text-slate-400 font-bold">
-                  Tidak ada voucher aktif dari backend.
-                </div>
-              )}
-            </div>
+                        <h5 className="font-black text-slate-900 text-sm md:text-base uppercase mb-1 md:mb-2">
+                          {voucherAny.title}
+                        </h5>
+
+                        <p className="text-xs md:text-sm text-slate-400 font-medium leading-relaxed mb-4 md:mb-4">
+                          {voucherAny.description}
+                        </p>
+
+                        {Number(voucherAny.minTransaction || 0) > 0 && (
+                          <p className="text-[10px] md:text-xs text-slate-400 font-bold mb-3">
+                            Min. transaksi Rp{' '}
+                            {Number(voucherAny.minTransaction || 0).toLocaleString(
+                              'id-ID'
+                            )}
+                          </p>
+                        )}
+
+                        {Number(voucherAny.maxDiscount || 0) > 0 &&
+                          voucherAny.discountType === 'PERCENT' && (
+                            <p className="text-[10px] md:text-xs text-slate-400 font-bold mb-3">
+                              Maks. diskon Rp{' '}
+                              {Number(voucherAny.maxDiscount || 0).toLocaleString(
+                                'id-ID'
+                              )}
+                            </p>
+                          )}
+
+                        {isBelowMinTransaction && (
+                          <p className="text-[10px] md:text-xs text-red-400 font-black uppercase tracking-widest mb-4">
+                            Belum memenuhi minimal transaksi
+                          </p>
+                        )}
+
+                        <div
+                          className={`mt-auto pt-3 md:pt-4 border-t border-slate-50 flex items-center font-bold text-[10px] md:text-xs uppercase tracking-widest transition-opacity
+                          ${
+                            isDisabled
+                              ? 'text-slate-300 opacity-100'
+                              : isSelected
+                              ? 'text-red-500 opacity-100'
+                              : 'text-orange-500 opacity-0 group-hover:opacity-100'
+                          }
+                        `}
+                        >
+                          {isDisabled ? (
+                            <span>Tidak tersedia</span>
+                          ) : isSelected ? (
+                            <span className="flex items-center gap-1.5 md:gap-2">
+                              <XCircle size={13} />
+                              {t.cancelVoucher}
+                            </span>
+                          ) : (
+                            t.useVoucher
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {!isLoadingVouchers && availableVouchers.length === 0 && (
+                  <div className="col-span-full bg-white border border-slate-100 rounded-3xl p-8 text-center text-slate-400 font-bold">
+                    {isMember
+                      ? 'Tidak ada voucher gamifikasi yang tersedia untuk member ini.'
+                      : 'Masuk sebagai member untuk melihat voucher gamifikasi.'}
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         </main>
       </div>

@@ -7,6 +7,7 @@ import {
   Loader2,
   CreditCard,
   Scan,
+  Trash2,
 } from 'lucide-react';
 import { CartItem } from '../types';
 import {
@@ -29,8 +30,6 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
   setCart,
 }) => {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [productsList, setProductsList] = useState<any[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [statusMsg, setStatusMsg] = useState<string>('Inisialisasi...');
   const [barcodeInput, setBarcodeInput] = useState<string>('');
 
@@ -38,21 +37,16 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
   const cartPanelRef = useRef<HTMLDivElement>(null);
 
   const fetchProducts = async () => {
-    setIsLoadingProducts(true);
     setStatusMsg('Sync Katalog...');
 
     try {
       const products = await getCvProducts();
       const normalized = products.map(toCatalogProduct);
 
-      setProductsList(normalized);
       setStatusMsg(normalized.length > 0 ? 'Siap Scan' : 'Katalog Kosong');
     } catch (err) {
       console.error('Fetch failed', err);
-      setProductsList([]);
       setStatusMsg('Gagal memuat katalog backend');
-    } finally {
-      setIsLoadingProducts(false);
     }
   };
 
@@ -66,7 +60,17 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
 
   const addProductToCart = (product: any) => {
     setCart((prev) => {
-      const existingIdx = prev.findIndex((item) => item.id === product.id);
+      const productName = product.name || product.nama || 'Produk';
+      const productPrice = Number(product.price || product.harga || 0);
+      const productPoints = Number(
+        product.cashbackReward || product.points || product.poin || 0
+      );
+      const productImage =
+        product.image_url || product.imageUrl || product.foto || '';
+
+      const existingIdx = prev.findIndex(
+        (item) => item.id === product.id || item.name === productName
+      );
 
       if (existingIdx > -1) {
         const updated = [...prev];
@@ -77,12 +81,12 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
       return [
         ...prev,
         {
-          id: product.id,
-          name: product.nama,
-          price: product.harga,
+          id: product.id || Math.random().toString(),
+          name: productName,
+          price: productPrice,
           quantity: 1,
-          points: product.poin,
-          imageUrl: product.foto,
+          points: productPoints,
+          imageUrl: productImage,
         },
       ];
     });
@@ -99,6 +103,10 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
       updated[idx].quantity = quantity;
       return updated;
     });
+  };
+
+  const removeCartItem = (idx: number) => {
+    setCart((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const handleScanByBarcode = async (barcodeValue?: string) => {
@@ -155,6 +163,11 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
     0
   );
 
+  const totalPoints = cart.reduce(
+    (sum, item) => sum + ((item.points || 0) * item.quantity),
+    0
+  );
+
   return (
     <div
       className="fixed inset-0 bg-[#F8FAFC] flex flex-col lg:flex-row overflow-hidden font-['Plus_Jakarta_Sans']"
@@ -198,7 +211,10 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
               ) : (
                 <>
                   <Barcode size={80} className="text-slate-300 md:hidden" />
-                  <Barcode size={120} className="text-slate-300 hidden md:block" />
+                  <Barcode
+                    size={120}
+                    className="text-slate-300 hidden md:block"
+                  />
                 </>
               )}
 
@@ -219,19 +235,20 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
           </h2>
 
           <p className="text-sm md:text-base text-slate-400 max-w-xs leading-relaxed">
-            Arahkan scanner ke barcode produk. Produk akan otomatis masuk ke keranjang.
+            Arahkan scanner ke barcode produk. Produk akan otomatis masuk ke
+            keranjang.
           </p>
         </div>
       </div>
 
       <div
         ref={cartPanelRef}
-        className="w-full lg:w-[480px] bg-white flex flex-col z-30 shadow-[-40px_0_80px_rgba(0,0,0,0.05)] border-t lg:border-t-0 lg:border-l border-slate-100 h-[55vh] lg:h-full"
+        className="w-full lg:w-[520px] bg-white flex flex-col z-30 shadow-[-40px_0_80px_rgba(0,0,0,0.05)] border-t lg:border-t-0 lg:border-l border-slate-100 max-h-[55vh] lg:max-h-full"
       >
-        <div className="p-4 md:p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-[#F97316] rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
-              <ShoppingCart size={24} />
+        <div className="p-6 md:p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+          <div className="flex items-center gap-3 md:gap-5">
+            <div className="w-10 h-10 md:w-14 md:h-14 bg-[#F97316]/10 rounded-xl md:rounded-[22px] flex items-center justify-center text-[#F97316]">
+              <ShoppingCart size={28} />
             </div>
 
             <div>
@@ -239,7 +256,7 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
                 Keranjang
               </h2>
               <p className="text-slate-400 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">
-                Scanner Terhubung
+                Database Terhubung
               </p>
             </div>
           </div>
@@ -255,6 +272,7 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
               <div className="w-20 h-20 md:w-32 md:h-32 bg-slate-50 rounded-[32px] md:rounded-[48px] flex items-center justify-center border-2 border-dashed border-slate-200">
                 <Package size={48} className="text-slate-200" />
               </div>
+
               <p className="text-slate-900 font-black text-sm md:text-base uppercase tracking-[0.2em]">
                 Keranjang Kosong
               </p>
@@ -272,7 +290,7 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
                       alt={item.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.src = '';
                       }}
                     />
                   ) : (
@@ -289,23 +307,33 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 md:gap-3 bg-slate-50 border border-slate-100 px-2.5 md:px-3 py-1.5 rounded-xl md:rounded-2xl shrink-0">
-                  <button
-                    onClick={() => updateQuantity(idx, item.quantity - 1)}
-                    className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-sm md:text-base transition-all"
-                  >
-                    −
-                  </button>
+                <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                  <div className="flex items-center gap-2 md:gap-3 bg-slate-50 border border-slate-100 px-2.5 md:px-3 py-1.5 rounded-xl md:rounded-2xl">
+                    <button
+                      onClick={() => updateQuantity(idx, item.quantity - 1)}
+                      className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-sm md:text-base transition-all"
+                    >
+                      −
+                    </button>
 
-                  <span className="font-black text-slate-900 text-sm md:text-base min-w-[20px] text-center">
-                    {item.quantity}
-                  </span>
+                    <span className="font-black text-slate-900 text-sm md:text-base min-w-[20px] text-center">
+                      {item.quantity}
+                    </span>
+
+                    <button
+                      onClick={() => updateQuantity(idx, item.quantity + 1)}
+                      className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-[#F97316] hover:bg-[#EA580C] text-white font-black text-sm md:text-base transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
 
                   <button
-                    onClick={() => updateQuantity(idx, item.quantity + 1)}
-                    className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-[#F97316] hover:bg-[#EA580C] text-white font-black text-sm md:text-base transition-all"
+                    onClick={() => removeCartItem(idx)}
+                    className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl flex items-center justify-center bg-red-50 text-red-300 hover:text-red-500 hover:bg-red-100 transition-all"
+                    title="Hapus produk"
                   >
-                    +
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
@@ -317,7 +345,7 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
           <div className="flex justify-between items-end mb-6 md:mb-10">
             <div className="space-y-0.5 md:space-y-1">
               <p className="text-white/40 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em]">
-                Total Bayar
+                Total
               </p>
               <p className="text-white font-black text-2xl md:text-4xl tracking-tighter">
                 Rp {subtotal.toLocaleString('id-ID')}
@@ -329,7 +357,7 @@ const BarcodeScannerPage: React.FC<BarcodeScannerPageProps> = ({
                 Cashback
               </p>
               <p className="text-white font-black text-base md:text-xl">
-                +0 pts
+                +{totalPoints} pts
               </p>
             </div>
           </div>

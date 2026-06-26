@@ -70,22 +70,49 @@ const App: React.FC = () => {
     setIsCheckingMember(true);
 
     try {
+      console.log('Kode member hasil scan:', id);
+
       const result = await getCvMemberByCode(id);
 
+      console.log('Response member dari backend:', result);
+
+      const data: any = (result as any)?.member || result || {};
+
       const member: MemberData = {
-        id: String(result.member_code || id),
+        id: String(
+          data.member_code ||
+            data.user_id ||
+            data.id ||
+            data.code ||
+            id
+        ),
         name: String(
-          result.member_name ||
-            result.nama_member ||
-            result.name ||
+          data.member_name ||
+            data.nama_member ||
+            data.name ||
+            data.username ||
             'Member'
         ),
-        tier: String(result.tier || 'Silver'),
-        points: Number(result.points || 0),
+        tier: String(
+          data.tier ||
+            data.membership_level ||
+            'Silver'
+        ),
+        points: Number(
+          data.cashback_points ??
+            data.cashbackPoints ??
+            data.points ??
+            0
+        ),
       };
 
       setMemberInfo(member);
       setIsMember(true);
+
+      // Reset voucher/poin lama supaya tidak nyangkut dari member sebelumnya
+      setSelectedVoucher(null);
+      setPointsUsed(0);
+
       setView(ViewState.SELECT_VOUCHER);
     } catch (error) {
       console.error('Member search error:', error);
@@ -136,7 +163,11 @@ const App: React.FC = () => {
         tax: taxValue,
         total,
         payment_method: method,
+
+        // memberInfo.id sekarang berisi user_id/member_code dari backend
         member_code: isMember ? memberInfo?.id || null : null,
+        user_id: isMember ? memberInfo?.id || null : null,
+
         voucher_code: selectedVoucher?.id || null,
         points_earned: totalPointsEarned,
         points_used: pointsUsed,
